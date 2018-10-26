@@ -290,6 +290,9 @@ setup(
 	ext_modules			= [Extension('_NetworKit', sources=[])],
 	test_suite			= 'nose.collector',
 	install_requires	= version.install_requires,
+	extras_require = {
+		'docs': ['sphinx_bootstrap_theme']
+	},
 	zip_safe			= False) # see https://cython.readthedocs.io/en/latest/src/reference/compilation.html
 
 ################################################
