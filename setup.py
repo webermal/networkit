@@ -140,7 +140,7 @@ def cythonizeFile(filepath):
 			exit(1)
 		print("_NetworKit.pyx cythonized", flush=True)
 
-def buildNetworKit(install_prefix, externalCore=False, withTests=False):
+def buildNetworKit(install_prefix, optimize=True, externalCore=False, withTests=False):
 	# Cythonize file
 	cythonizeFile("networkit/_NetworKit.pyx")
 	try:
@@ -149,7 +149,11 @@ def buildNetworKit(install_prefix, externalCore=False, withTests=False):
 		pass
 	# Build cmake call
 	abs_prefix = os.path.join(os.getcwd(), install_prefix)
-	comp_cmd = ["cmake","-DCMAKE_BUILD_TYPE=Release"]
+	comp_cmd = ["cmake"]
+	if optimize:
+		comp_cmd.append("-DCMAKE_BUILD_TYPE=Release")
+	else:
+		comp_cmd.append("-DCMAKE_BUILD_TYPE=Debug")
 	comp_cmd.append("-DCMAKE_INSTALL_PREFIX="+abs_prefix)
 	comp_cmd.append("-DCMAKE_CXX_COMPILER="+cmakeCompiler)
 	from sysconfig import get_paths, get_config_var
@@ -203,7 +207,9 @@ class build_ext(Command):
 		('library-dirs=', 'L',
 			"directories to search for external C libraries" + sep_by),
 		('networkit-external-core', None,
-			"use external NetworKit core library")
+			"use external NetworKit core library"),
+		('networkit-no-optimization', None,
+			"build NetworKit without optimizations")
 	]
 
 	def initialize_options(self):
@@ -214,9 +220,14 @@ class build_ext(Command):
 		self.include_dirs = None
 		self.library_dirs = None
 		self.networkit_external_core = False
+		self.networkit_no_optimization = False
 
 		self.extensions = None
 		self.package = None
+
+		# Disable optimization on RTD to accelerate the build.
+		if 'READTHEDOCS' in os.environ:
+			self.networkit_no_optimization = True
 
 	def finalize_options(self):
 		self.set_undefined_options('build',
@@ -252,7 +263,8 @@ class build_ext(Command):
 			# The --inplace implementation is less sophisticated than in distutils,
 			# but it should be sufficient for NetworKit.
 			prefix = self.distribution.src_root or os.getcwd()
-		buildNetworKit(prefix, externalCore=self.networkit_external_core)
+		buildNetworKit(prefix, optimize=not self.networkit_no_optimization,
+				externalCore=self.networkit_external_core)
 
 ################################################
 # initialize python setup
