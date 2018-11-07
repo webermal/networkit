@@ -95,6 +95,7 @@ matrix:
       os: linux
       addons: *gcc8
       script:
+        - set -e
         - $CXX --version
         - mkdir debug_test && cd "$_"
         - cmake -DNETWORKIT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug ..
@@ -106,6 +107,7 @@ matrix:
       os: linux
       addons: *gcc8
       script:
+        - set -e
         - $CXX --version
         - mkdir build_non_monolith && cd "$_"
         - cmake -DNETWORKIT_MONOLITH=OFF -DCMAKE_BUILD_TYPE=Debug ..
@@ -118,6 +120,7 @@ matrix:
       os: linux
       addons: *gcc8
       script: &script_cpp_only
+        - set -e
         - $CXX --version
         - mkdir debug_test && cd "$_"
         - cmake -DNETWORKIT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DNETWORKIT_CXX_STANDARD=$CXX_STANDARD ..
@@ -135,8 +138,8 @@ matrix:
     - name: macOS, legacy Clang 4 
     - name: macOS (xcode8), GCC 6
 
-
 script:
+ - set -e
  - $CXX --version
  - python3 --version
  - cmake --version
