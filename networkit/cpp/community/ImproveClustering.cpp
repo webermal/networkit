@@ -33,8 +33,6 @@ namespace NetworKit {
             result = minCutPartition;
 
         } while (alpha_0 < alpha and i < 10);
-
-        hasRun = true;
     }
 
     float ImproveClustering::relativeQuotientScore(const Graph* G, std::set<node> A, std::set<node> S){
