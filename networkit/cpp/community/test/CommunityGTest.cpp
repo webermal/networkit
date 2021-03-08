@@ -39,6 +39,7 @@
 #include <networkit/generators/ClusteredRandomGraphGenerator.hpp>
 #include <networkit/generators/ErdosRenyiGenerator.hpp>
 #include <networkit/community/CoverF1Similarity.hpp>
+#include <networkit/community/MinCutStoerWagner.hpp>
 
 #include <tlx/unused.hpp>
 
@@ -694,6 +695,28 @@ TEST_F(CommunityGTest, testCoverF1Similarity) {
     EXPECT_DOUBLE_EQ(0.0, sim.getValue(2));
     EXPECT_DOUBLE_EQ((1.0 + f1) / 3.0, sim.getUnweightedAverage());
     EXPECT_DOUBLE_EQ((1.0 * 10.0 + f1 * 10.0) / 29.0, sim.getWeightedAverage());
+}
+
+TEST_F(CommunityGTest, tryMinCutStoerWagner) {
+//	count n = 6;
+//	Graph G(n);
+//
+//	G.addEdge(0, 2);
+//	G.addEdge(1, 2);
+//	G.addEdge(2, 3);
+//	G.addEdge(2, 4);
+//	G.addEdge(3, 5);
+//	G.addEdge(4, 5);
+
+	METISGraphReader reader;
+	Graph G = reader.read("input/PGPgiantcompo.graph");
+
+    MinCutStoerWagner sw(G);
+    sw.run();
+    Partition result = sw.getPartition();
+
+    EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
+    EXPECT_EQ(2, result.getSubsetIds().size());
 }
 
 } /* namespace NetworKit */

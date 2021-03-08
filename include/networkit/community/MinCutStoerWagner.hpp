@@ -16,8 +16,6 @@
 namespace NetworKit {
 
 /**
- * @ingroup community
- * Parallel Louvain Method - a multi-level modularity maximizer.
  */
 class MinCutStoerWagner final : public Algorithm {
 
@@ -48,18 +46,16 @@ public:
 private:
     
     const Graph* G;
-    Graph* current_graph;
+    Graph current_graph;
     std::vector<node> node_mapping;
     Aux::BucketPQ pq;
     Partition result;
 
-    double getKey(node u);
-    void fillQueue();
+    void fillQueue(node a);
+    void clearQueue();
     void updateKeys(node u, Partition& A);
 
     Partition phase(node a);
-
-    double cut(Partition& p);
 
 };
 

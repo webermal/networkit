@@ -20,6 +20,7 @@ networkit_add_module(community
     LPDegreeOrdered.cpp
     LocalCoverEvaluation.cpp
     LocalPartitionEvaluation.cpp
+    MinCutStoerWagner.cpp
     Modularity.cpp
     NMIDistance.cpp
     NodeStructuralRandMeasure.cpp
