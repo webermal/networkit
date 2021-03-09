@@ -2,125 +2,64 @@
 // Created by malte on 26.02.21.
 //
 
-#include <networkit/community/ImproveClustering.hpp>
+#include "networkit/community/ImproveClustering.hpp"
 #include <networkit/graph/Graph.hpp>
-#include <networkit/community/MinCutStoerWagner.hpp>
+#include "networkit/community/MinCutStoerWagner.hpp"
 #include <iostream>
-#include <networkit/community/GraphClusteringTools.hpp>
-#include <networkit/community/EdgeCut.hpp>
+
 
 namespace NetworKit {
 
-    ImproveClustering::ImproveClustering(const Graph &G, const Partition initPartition):
-      CommunityDetectionAlgorithm(G, initPartition), flowGraph(G) {
-
-        // add source (s) and sink (t) to the flowGraph
-        s = flowGraph.addNode();
-        t = flowGraph.addNode();
-
-        // Check if initial Partition has 2 Clusters
-        if(result.subsetSizes().size() != 2){
-            throw std::runtime_error("The number of Clusters in the initial Partition must be 2");
-        }
-
-        //Check if initial Partition is a proper Clustering
-        if(!GraphClusteringTools::isProperClustering(G, result)){
-            throw std::runtime_error("The initial Partition must be a proper clustering");
-        }
-
-        // Compute the set of indices A from the initial Partition
-        result.compact();
-        index minS = result.getMembers(0).size() < result.getMembers(1).size() ? 0 : 1;
-        A = result.getMembers(minS);
-
-        // Compute f_a the ration between A and the complement of A
-        f_a = (double)A.size()/
-              (double)(G.numberOfNodes() - A.size());
-
-        // Add edges to the transformed Graph "flowGraph" from s to A and from complement(A) to t
-        G.forNodes([&](const node n){
-            if (A.find(n) != A.end()){
-                flowGraph.addEdge(s, n, 1);
-            } else {
-                flowGraph.addEdge(n, t, 1);
-            }
-        });
-    }
+    ImproveClustering::ImproveClustering(const Graph &G, const Partition &initPartition): CommunityDetectionAlgorithm(G, initPartition) {}
+    //ImproveClustering::ImproveClustering(const Graph &G, const Partition &initPartition): G(&G), initPartition(initPartition){}
 
     void ImproveClustering::run() {
-
-        INFO("FLOW GRAPH deg s", flowGraph.degree(s));
-        INFO("FLOW GRAPH deg t", flowGraph.degree(t));
-
-        INFO("Init Partition", result.getVector());
-        EdgeCut ec;
-        double boundaryA = ec.getQuality(result, *G);
-        double alpha_0 = boundaryA/std::min(A.size(), (G->numberOfNodes() - A.size()));
-        double alpha;
+        result = initPartition;
+        std::map<index, count> sizes = initPartition.subsetSizeMap();
+        index s = std::min_element(sizes.begin(), sizes.end(),[](const auto &l, const auto &r){ return l.second < r.second;})->first;
+        float alpha_0 = relativeQuotientScore(*G, initPartition.getMembers(s), initPartition.getMembers(s));
+        float alpha;
         int i = 0;
         do {
             i += 1;
             std::cout << i << "\n";
-
-            updateEdgeWeights(alpha_0);
-
             alpha = alpha_0;
 
-            MinCutStoerWagner minCut(flowGraph, s, t);
+            MinCutStoerWagner minCut(*G);
             minCut.run();
             Partition minCutPartition = minCut.getPartition();
 
+            std::map<index, count> minCutSizes = minCutPartition.subsetSizeMap();
+            index minS = std::min_element(minCutSizes.begin(), minCutSizes.end(),[](const auto &l, const auto &r){ return l.second < r.second;})->first;
+            alpha_0 = relativeQuotientScore(*G, initPartition.getMembers(s), minCutPartition.getMembers(minS));
 
-            INFO("MIN CUT IN IMPROVE RUN: ", minCutPartition.getVector());
+            result = minCutPartition;
 
-
-
-            alpha_0 = relativeQuotientScore(minCutPartition);
-
-            INFO("ALPHA 0: ", alpha_0);
-
-        } while (i < 10);
+        } while (alpha_0 <= alpha and i < 3);
 
         hasRun = true;
     }
 
-    double ImproveClustering::relativeQuotientScore(const Partition& p){
+    float ImproveClustering::relativeQuotientScore(const Graph &G, std::set<node> A, std::set<node> S){
+        float f = (float)A.size() / (float)(G.numberOfNodes() - A.size());
+        float d = 0;
 
-        S = p.getMembers(p.subsetOf(s));
-
-        double dAOfS = 0.0;
-        for (const node n: S){
-            if (A.find(n) != A.end()){
-                dAOfS += 1.0;
-            } else if (G->hasNode(n)){
-                dAOfS -= f_a;
-            }
+        for (const auto &n: S){
+            d += A.count(n) ? 1 : f;
         }
 
-        INFO("d hat den Wert: ", dAOfS);
+        float deltaS = 0;
 
-        // Compute the Cut-Value of S / complement(S)
-        EdgeCut ec;
-        double boundaryS = ec.getQuality(p, flowGraph);
+        for (const auto &n: S){
+            G.forNeighborsOf(n, [&](const node u, const node v){
+                if (!S.count(v)){
+                    deltaS += G.weight(u,v);
+                }
+            });
+        }
 
-        INFO("DELTA S: ", boundaryS);
-        INFO("D: ", dAOfS);
-        double q = dAOfS > 0.0 ? boundaryS/dAOfS : std::numeric_limits<double>::max();
+        float q = d > 0.0 ? deltaS/d : MAXFLOAT;
 
         return q;
-    }
-
-
-
-    void ImproveClustering::updateEdgeWeights(double alpha){
-        flowGraph.forNeighborsOf(s, [&](node n){
-            flowGraph.setWeight(s, n, alpha);
-            INFO("ALPHA: ", alpha);
-        });
-
-        flowGraph.forNeighborsOf(t, [&](node n){
-            flowGraph.setWeight(n, t, alpha*f_a);
-            INFO("ALPHA*FA: ", alpha*f_a);
-        });
     }
 }

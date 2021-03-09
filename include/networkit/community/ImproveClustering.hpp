@@ -11,20 +11,12 @@ namespace NetworKit {
     class ImproveClustering final: public CommunityDetectionAlgorithm {
 
     private:
-        Graph flowGraph;
-        node s;
-        node t;
-        std::set<node> A;
-        std::set<node> S;
-        double f_a;
-        index minS;
-
-        double relativeQuotientScore(const Partition& p);
-        void updateEdgeWeights(double alpha);
+        float relativeQuotientScore(const Graph &G, std::set<node>, std::set<node>);
+        Partition initPartition;
 
     public:
 
-        ImproveClustering(const Graph &G, const Partition initPartition);
+        ImproveClustering(const Graph &G, const Partition &initPartition);
         void run() override;
     };
 }
