@@ -13,6 +13,7 @@ networkit_add_module(community
     GraphClusteringTools.cpp
     GraphStructuralRandMeasure.cpp
     HubDominance.cpp
+    ImproveClustering.cpp
     IntrapartitionDensity.cpp
     IsolatedInterpartitionConductance.cpp
     IsolatedInterpartitionExpansion.cpp
@@ -24,8 +25,6 @@ networkit_add_module(community
     Modularity.cpp
     NMIDistance.cpp
     NodeStructuralRandMeasure.cpp
-    ImproveClustering.cpp
-    MinCutStoerWagner.cpp
     PLM.cpp
     PLP.cpp
     ParallelAgglomerativeClusterer.cpp
