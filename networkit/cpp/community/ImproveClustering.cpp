@@ -17,7 +17,7 @@ namespace NetworKit {
         t = flowGraph.addNode();
         // TODO check if initPartition has exactely two Groups
         std::map<index, count> initPartitionSizes = initPartition.subsetSizeMap();
-        index minS = std::min_element(
+        minS = std::min_element(
                          initPartitionSizes.begin(),
                          initPartitionSizes.end(),
                          [](const auto &l, const auto &r){ return l.second < r.second;}
@@ -25,21 +25,25 @@ namespace NetworKit {
 
         initPartitionSet1 = initPartition.getMembers(minS);
         initPartitionSet1.insert(s);
+        f_a = (double)initPartitionSet1.size()/(double)(G.numberOfNodes() - initPartitionSet1.size());
 
         G.forNodes([&](const node n){
             if (initPartition.subsetOf(n) == minS){
-                flowGraph.addEdge(s, n);
+                flowGraph.addEdge(s, n, 0);
             } else {
-                flowGraph.addEdge(n, t);
+                flowGraph.addEdge(n, t, 0);
             }
         });
     }
     //ImproveClustering::ImproveClustering(const Graph &G, const Partition &initPartition): G(&G), initPartition(initPartition){}
 
     void ImproveClustering::run() {
+
         result = initPartition;
-        index sIndex = initPartition.subsetOf(s);
-        double alpha_0 = 1;// = relativeQuotientScore(G, initPartitionSet1,initPartitionSet1);
+
+        updateEdgeWeights(flowGraph, relativeQuotientScore(G, initPartition.getMembers(minS), initPartition.getMembers(minS)));
+
+        double alpha_0 = relativeQuotientScore(&flowGraph, initPartitionSet1,initPartitionSet1);
         double alpha;
         int i = 0;
         do {
@@ -75,11 +79,11 @@ namespace NetworKit {
     }
 
     double ImproveClustering::relativeQuotientScore(const Graph* G, std::set<node> A, std::set<node> S){
-        double f = (double)A.size() / (double )(G->numberOfNodes() - A.size());
+        //double f = (double)A.size() / (double )(G->numberOfNodes() - A.size());
         double d = 0.0;
 
         for (const auto &n: S){
-            d += A.count(n) ? 1.0 : f;
+            d += A.count(n) ? 1.0 : f_a;
         }
 
         double deltaS = 0.0;
@@ -95,5 +99,15 @@ namespace NetworKit {
         double q = d > 0.0 ? deltaS/d : std::numeric_limits<double>::max();
 
         return q;
+    }
+
+    void ImproveClustering::updateEdgeWeights(Graph G, double alpha){
+        G.forNeighborsOf(s, [&](node n){
+            G.setWeight(s, n, alpha);
+        });
+
+        G.forNeighborsOf(t, [&](node n){
+            G.setWeight(n, t, alpha*f_a);
+        });
     }
 }

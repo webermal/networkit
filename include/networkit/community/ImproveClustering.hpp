@@ -15,8 +15,11 @@ namespace NetworKit {
         node s;
         node t;
         std::set<node> initPartitionSet1;
+        double f_a;
+        index minS;
 
         double relativeQuotientScore(const Graph* G, std::set<node> A, std::set<node> S);
+        void updateEdgeWeights(Graph G, double alpha);
 
         Partition initPartition;
 
