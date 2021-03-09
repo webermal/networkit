@@ -699,7 +699,6 @@ TEST_F(CommunityGTest, testCoverF1Similarity) {
 }
 
 TEST_F(CommunityGTest, tryMinCutStoerWagner) {
-
 	METISGraphReader reader;
 	Graph G = reader.read("input/PGPgiantcompo.graph");
 
@@ -712,18 +711,8 @@ TEST_F(CommunityGTest, tryMinCutStoerWagner) {
 }
 
 TEST_F(CommunityGTest, tryImproveClustering) {
-	count n = 6;
-	Graph G(n);
-
-	G.addEdge(0, 2);
-	G.addEdge(1, 2);
-	G.addEdge(2, 3);
-	G.addEdge(2, 4);
-	G.addEdge(3, 5);
-	G.addEdge(4, 5);
-
-//	METISGraphReader reader;
-//	Graph G = reader.read("input/PGPgiantcompo.graph");
+	METISGraphReader reader;
+	Graph G = reader.read("input/PGPgiantcompo.graph");
 
 	Partition initial(G.numberOfNodes(), 0);
 	initial.moveToSubset(1, 0);

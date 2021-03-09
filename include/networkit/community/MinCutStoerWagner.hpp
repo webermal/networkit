@@ -11,7 +11,7 @@
 #include <networkit/base/Algorithm.hpp>
 #include <networkit/graph/Graph.hpp>
 #include <networkit/structures/Partition.hpp>
-#include <networkit/auxiliary/BucketPQ.hpp>
+#include <networkit/auxiliary/PrioQueue.hpp>
 
 namespace NetworKit {
 
@@ -48,11 +48,11 @@ private:
     const Graph* G;
     Graph current_graph;
     std::vector<node> node_mapping;
-    Aux::BucketPQ pq;
+    Aux::PrioQueue<double, node> pq;
+    std::vector<double> keys;
     Partition result;
 
     void fillQueue(node a);
-    void clearQueue();
     void updateKeys(node u, Partition& A);
 
     Partition phase(node a);

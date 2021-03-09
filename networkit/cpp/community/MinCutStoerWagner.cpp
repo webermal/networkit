@@ -7,20 +7,18 @@
 
 #include <sstream>
 
-#include <iostream>
-
 #include <networkit/community/MinCutStoerWagner.hpp>
 #include <networkit/community/EdgeCut.hpp>
 #include <networkit/graph/GraphTools.hpp>
 
-constexpr int64_t inf = std::numeric_limits<int64_t>::max();
-constexpr int64_t neg_inf = std::numeric_limits<int64_t>::min();
+constexpr double inf = std::numeric_limits<double>::max();
+constexpr double neg_inf = std::numeric_limits<double>::min();
 
 namespace NetworKit {
 
 MinCutStoerWagner::MinCutStoerWagner(const Graph &G) :
-		G(&G), current_graph(G, true, false), pq(
-				G.upperNodeIdBound(), -GraphTools::maxWeightedDegree(G), 0) {
+		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound()),
+				keys(G.upperNodeIdBound()) {
 	G.forNodes([&](node u) {
 		node_mapping.push_back(u);
 	});
@@ -31,7 +29,7 @@ void MinCutStoerWagner::run() {
 	double best_cut = inf;
 	EdgeCut ec;
 
-	while (current_graph.numberOfNodes() > 1) {
+	while (current_graph.numberOfNodes() > 2) {
 		Partition current_solution = phase(0);
 		double current_cut = ec.getQuality(current_solution, *G);
 
@@ -47,26 +45,27 @@ void MinCutStoerWagner::run() {
 
 void MinCutStoerWagner::fillQueue(node a) {
 	current_graph.forNodes([&](node u) {
+		if (u == a) {
+			return;
+		}
+
 		edgeweight weight = current_graph.weight(a, u);
 
 		if (weight > 0) {
 			pq.insert(-weight, u);
+			keys[u] = weight;
 		} else {
 			pq.insert(neg_inf, u);
+			keys[u] = neg_inf;
 		}
 	});
-}
-
-void MinCutStoerWagner::clearQueue() {
-	while (pq.size() > 0) {
-		pq.extractMin();
-	}
 }
 
 void MinCutStoerWagner::updateKeys(node u, Partition &A) {
 	current_graph.forNeighborsOf(u, [&](node v, edgeweight weight) {
 		if (A[v] == 0) {
-			pq.changeKey(pq.getKey(v) - weight, v);
+			pq.changeKey(keys[v] - weight, v);
+			keys[v] -= weight;
 		}
 	});
 }
@@ -76,7 +75,7 @@ Partition MinCutStoerWagner::phase(node a) {
 	Partition result(G->numberOfNodes(), 0);
 	A[a] = 1;
 
-	clearQueue();
+	pq.clear();
 	fillQueue(a);
 
 	while (pq.size() > 2) {
@@ -92,19 +91,17 @@ Partition MinCutStoerWagner::phase(node a) {
 
 	// transform A to fit on the whole graph G
 	current_graph.forNodes([&](node u) {
-		result[u] = A[node_mapping[u]];
+		result.moveToSubset(A[node_mapping[u]], u);
 	});
 
 	node_mapping[s] = t;
 
 	// shrink G by merging s and t
-	current_graph.forNeighborsOf(s,
-			[&](node u, edgeweight weight) {
-				if (u != t) {
-					current_graph.setWeight(t, u,
-							current_graph.weight(t, u) + weight);
-				}
-			});
+	current_graph.forNeighborsOf(s, [&](node u, edgeweight weight) {
+		if (u != t) {
+			current_graph.setWeight(t, u, current_graph.weight(t, u) + weight);
+		}
+	});
 
 	current_graph.removeNode(s);
 
