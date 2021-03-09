@@ -14,13 +14,15 @@ namespace NetworKit {
         Graph flowGraph;
         node s;
         node t;
-        float relativeQuotientScore(const Graph* G, std::set<node>, std::set<node>);
+        std::set<node> initPartitionSet1;
+
+        double relativeQuotientScore(const Graph* G, std::set<node> A, std::set<node> S);
 
         Partition initPartition;
 
     public:
 
-        ImproveClustering(const Graph &G, const Partition &initPartition);
+        ImproveClustering(const Graph &G, const Partition initPartition);
         void run() override;
     };
 }
