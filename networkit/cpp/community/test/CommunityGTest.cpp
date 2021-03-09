@@ -699,8 +699,18 @@ TEST_F(CommunityGTest, testCoverF1Similarity) {
 }
 
 TEST_F(CommunityGTest, tryMinCutStoerWagner) {
-	METISGraphReader reader;
-	Graph G = reader.read("input/PGPgiantcompo.graph");
+//	count n = 6;
+//	Graph G(n);
+//
+//	G.addEdge(0, 2);
+//	G.addEdge(1, 2);
+//	G.addEdge(2, 3);
+//	G.addEdge(2, 4);
+//	G.addEdge(3, 5);
+//	G.addEdge(4, 5);
+
+    METISGraphReader reader;
+    Graph G = reader.read("../input/PGPgiantcompo.graph");
 
     MinCutStoerWagner sw(G);
     sw.run();
@@ -710,49 +720,47 @@ TEST_F(CommunityGTest, tryMinCutStoerWagner) {
     EXPECT_EQ(2, result.getSubsetIds().size());
 }
 
-TEST_F(CommunityGTest, tryImproveClustering0) {
-    count n = 6;
-    Graph G(n);
+TEST_F(CommunityGTest, tryMinCutStoerWagner2) {
+//	count n = 6;
+//	Graph G(n);
+//
+//	G.addEdge(0, 2);
+//	G.addEdge(1, 2);
+//	G.addEdge(2, 3);
+//	G.addEdge(2, 4);
+//	G.addEdge(3, 5);
+//	G.addEdge(4, 5);
 
-    G.addEdge(0, 2);
-    G.addEdge(1, 2);
-    G.addEdge(2, 3);
-    G.addEdge(2, 4);
-    G.addEdge(3, 5);
-    G.addEdge(4, 5);
-
-    //	METISGraphReader reader;
-    //	Graph G = reader.read("input/PGPgiantcompo.graph");
-
-    Partition initial(G.numberOfNodes(), 0);
-    initial.moveToSubset(1, 0);
-
-    MinCutStoerWagner mc(G);
-    mc.run();
-
-    Partition p = mc.getPartition();
-    //ImproveClustering ic(G, initial);
-    //ic.run();
-    //Partition result = ic.getPartition();
-
-    //EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
-    //EXPECT_EQ(2, result.getSubsetIds().size());
-}
-
-
-TEST_F(CommunityGTest, tryImproveClustering) {
 	METISGraphReader reader;
-	Graph G = reader.read("input/PGPgiantcompo.graph");
+	Graph G = reader.read("../input/polblogs.graph");
 
-	Partition initial(G.numberOfNodes(), 0);
-	initial.moveToSubset(1, 0);
-
-	ImproveClustering ic(G, initial);
-    ic.run();
-    Partition result = ic.getPartition();
+    MinCutStoerWagner sw(G);
+    sw.run();
+    Partition result = sw.getPartition();
 
     EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
     EXPECT_EQ(2, result.getSubsetIds().size());
 }
+
+TEST_F(CommunityGTest, testImproveClustering) {
+    METISGraphReader reader;
+    Graph G = reader.read("../input/PGPgiantcompo.graph");
+
+    ClusteringGenerator cg;
+
+    Partition partition = cg.makeRandomClustering(G, 2);
+
+    EXPECT_EQ(2, partition.getSubsetIds().size());
+
+    ImproveClustering ic(G, partition);
+
+    ic.run();
+
+    Partition result = ic.getPartition();
+
+    EXPECT_EQ(2, result.getSubsetIds().size());
+
+}
+
 
 } /* namespace NetworKit */
