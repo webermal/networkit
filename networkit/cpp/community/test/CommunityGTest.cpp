@@ -716,30 +716,94 @@ TEST_F(CommunityGTest, tryMinCutStoerWagner) {
     sw.run();
     Partition result = sw.getPartition();
 
+    INFO("MINCUT: ", result.getVector());
+
     EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
     EXPECT_EQ(2, result.getSubsetIds().size());
 }
 
 TEST_F(CommunityGTest, tryMinCutStoerWagner2) {
-//	count n = 6;
-//	Graph G(n);
-//
-//	G.addEdge(0, 2);
-//	G.addEdge(1, 2);
-//	G.addEdge(2, 3);
-//	G.addEdge(2, 4);
-//	G.addEdge(3, 5);
-//	G.addEdge(4, 5);
+	count n = 6;
+	Graph G(n);
 
-	METISGraphReader reader;
-	Graph G = reader.read("../input/polblogs.graph");
+	G.addEdge(0, 2);
+	G.addEdge(1, 2);
+	G.addEdge(2, 3);
+	G.addEdge(2, 4);
+	G.addEdge(3, 5);
+	G.addEdge(4, 5);
+
+	//METISGraphReader reader;
+	//Graph G = reader.read("../input/polblogs.graph");
 
     MinCutStoerWagner sw(G);
     sw.run();
     Partition result = sw.getPartition();
 
+
+    INFO("MINCUT: ", result.getVector());
+
     EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
     EXPECT_EQ(2, result.getSubsetIds().size());
+}
+
+TEST_F(CommunityGTest, testImproveClustering0){
+    count n = 8;
+    Graph G(n, true, false);
+
+	G.addEdge(0, 1, 1);
+    G.addEdge(0, 2, 1);
+    G.addEdge(0, 3, 1);
+    G.addEdge(1, 2, 1);
+    G.addEdge(1, 3, 1);
+    G.addEdge(2, 3, 1);
+    G.addEdge(4, 5, 1);
+    G.addEdge(4, 6, 1);
+    G.addEdge(4, 7, 1);
+    G.addEdge(5, 6, 1);
+    G.addEdge(5, 7, 1);
+    G.addEdge(6, 7, 1);
+
+    G.addEdge(1, 4, 1);
+    G.addEdge(3, 6, 1);
+
+    std::vector<index> partitionVec;
+
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    partitionVec.push_back(2);
+    partitionVec.push_back(2);
+    partitionVec.push_back(2);
+
+
+    Partition partition(partitionVec);
+
+    INFO("SIZE OF G: ", G.numberOfNodes());
+    INFO("SZE OF PARTITION 1: ", partition.subsetSizeMap()[1]);
+    INFO("SIZE OF PARTITION 2.: ", partition.subsetSizeMap()[2]);
+
+    ImproveClustering ic(G, partition);
+
+    ic.run();
+
+    Partition result = ic.getPartition();
+
+    INFO("RESULT", result.getVector());
+
+    MinCutStoerWagner mc(G);
+
+    mc.run();
+
+    Partition partition1 = mc.getPartition();
+
+    partition1.compact();
+
+    INFO("COMPACT PARTITION MC", partition1.getMembers(1));
+
+
 }
 
 TEST_F(CommunityGTest, testImproveClustering) {
@@ -756,6 +820,7 @@ TEST_F(CommunityGTest, testImproveClustering) {
 
     double m = modularity1.getQuality(partition, G);
 
+    INFO("Size of random clustering: ", partition.subsetSizes().size());
     INFO("Modularity of random clustering: ", m);
 
     EXPECT_EQ(2, partition.getSubsetIds().size());
@@ -766,7 +831,10 @@ TEST_F(CommunityGTest, testImproveClustering) {
 
     Partition result = ic.getPartition();
 
-    double mr = modularity1.getQuality(result, G);
+    INFO("Size of result: ", result.subsetSizes().size());
+
+    Modularity modularity2;
+    double mr = modularity2.getQuality(result, G);
 
     INFO("Modularity after improve: ", mr);
 
