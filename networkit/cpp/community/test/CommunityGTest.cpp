@@ -699,8 +699,21 @@ TEST_F(CommunityGTest, testCoverF1Similarity) {
 }
 
 TEST_F(CommunityGTest, tryMinCutStoerWagner) {
-	METISGraphReader reader;
-	Graph G = reader.read("input/PGPgiantcompo.graph");
+	count n = 8;
+	Graph G(n, true);
+
+	G.addEdge(0, 1, 2);
+	G.addEdge(0, 4, 3);
+	G.addEdge(1, 2, 3);
+	G.addEdge(1, 4, 2);
+	G.addEdge(1, 5, 2);
+	G.addEdge(2, 3, 4);
+	G.addEdge(2, 6, 2);
+	G.addEdge(3, 6, 2);
+	G.addEdge(3, 7, 2);
+	G.addEdge(4, 5, 3);
+	G.addEdge(5, 6, 1);
+	G.addEdge(6, 7, 3);
 
     MinCutStoerWagner sw(G);
     sw.run();
@@ -708,6 +721,7 @@ TEST_F(CommunityGTest, tryMinCutStoerWagner) {
 
     EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
     EXPECT_EQ(2, result.getSubsetIds().size());
+    EXPECT_DOUBLE_EQ(4, EdgeCut().getQuality(result, G));
 }
 
 TEST_F(CommunityGTest, tryImproveClustering0) {

@@ -12,7 +12,6 @@
 #include <networkit/graph/GraphTools.hpp>
 
 constexpr double inf = std::numeric_limits<double>::max();
-constexpr double neg_inf = std::numeric_limits<double>::min();
 
 namespace NetworKit {
 
@@ -29,7 +28,7 @@ void MinCutStoerWagner::run() {
 	double best_cut = inf;
 	EdgeCut ec;
 
-	while (current_graph.numberOfNodes() > 2) {
+	while (current_graph.numberOfNodes() > 1) {
 		Partition current_solution = phase(0);
 		double current_cut = ec.getQuality(current_solution, *G);
 
@@ -50,14 +49,8 @@ void MinCutStoerWagner::fillQueue(node a) {
 		}
 
 		edgeweight weight = current_graph.weight(a, u);
-
-		if (weight > 0) {
-			pq.insert(-weight, u);
-			keys[u] = weight;
-		} else {
-			pq.insert(neg_inf, u);
-			keys[u] = neg_inf;
-		}
+		pq.insert(-weight, u);
+		keys[u] = -weight;
 	});
 }
 
@@ -73,10 +66,20 @@ void MinCutStoerWagner::updateKeys(node u, Partition &A) {
 Partition MinCutStoerWagner::phase(node a) {
 	Partition A(G->numberOfNodes(), 0);
 	Partition result(G->numberOfNodes(), 0);
-	A[a] = 1;
+
+	if (current_graph.numberOfNodes() == 2) {
+		current_graph.forNodes([&](node u) {
+			result.moveToSubset((node_mapping[u] == a) ? 1 : 0, u);
+		});
+
+		current_graph.removeNode(a);
+
+		return result;
+	}
 
 	pq.clear();
 	fillQueue(a);
+	A[a] = 1;
 
 	while (pq.size() > 2) {
 		node u = pq.extractMin().second;
