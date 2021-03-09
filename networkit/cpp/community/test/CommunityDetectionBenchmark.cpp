@@ -17,6 +17,7 @@
 #include <networkit/centrality/PageRank.hpp>
 #include <networkit/auxiliary/Timer.hpp>
 #include <networkit/structures/Partition.hpp>
+#include <networkit/community/ImproveClustering.hpp>
 
 #include <networkit/graph/Graph.hpp>
 #include <networkit/io/METISGraphReader.hpp>
@@ -41,7 +42,7 @@ TEST_F(CommunityDetectionBenchmark, benchClusteringAlgos) {
     // std::string graph = "../graphs/in-2004.graph";
     // std::string graph = "../graphs/uk-2002.graph";
     // std::string graph = "../graphs/uk-2007-05.graph";
-    std::string graph = "input/polblogs.graph";
+    std::string graph = "/home/malte/Documents/Uni/Programmierprojekt/networkit/input/polblogs.graph";
 
     DEBUG("Reading graph file ", graph.c_str(), " ...");
     timer.start();
@@ -83,6 +84,7 @@ TEST_F(CommunityDetectionBenchmark, benchClusteringAlgos) {
                 "s,\t#communities: ", zeta.numberOfSubsets(),
                 ",\tmodularity: ", mod.getQuality(zeta, G));
     }
+    std::cout << "HALLO HALLO HALLO" << "\n";
 }
 
 TEST_F(CommunityDetectionBenchmark, benchPageRankCentrality) {
