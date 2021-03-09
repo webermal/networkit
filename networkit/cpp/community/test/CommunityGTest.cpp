@@ -744,11 +744,19 @@ TEST_F(CommunityGTest, tryMinCutStoerWagner2) {
 
 TEST_F(CommunityGTest, testImproveClustering) {
     METISGraphReader reader;
-    Graph G = reader.read("../input/PGPgiantcompo.graph");
+    Graph G = reader.read("../input/lesmis.graph");
 
     ClusteringGenerator cg;
 
+    INFO("Graph weighted?", G.isWeighted());
+
     Partition partition = cg.makeRandomClustering(G, 2);
+
+    Modularity modularity1;
+
+    double m = modularity1.getQuality(partition, G);
+
+    INFO("Modularity of random clustering: ", m);
 
     EXPECT_EQ(2, partition.getSubsetIds().size());
 
@@ -756,9 +764,13 @@ TEST_F(CommunityGTest, testImproveClustering) {
 
     ic.run();
 
-    //Partition result = ic.getPartition();
+    Partition result = ic.getPartition();
 
-    //EXPECT_EQ(2, result.getSubsetIds().size());
+    double mr = modularity1.getQuality(result, G);
+
+    INFO("Modularity after improve: ", mr);
+
+    EXPECT_EQ(2, result.getSubsetIds().size());
 
 }
 
