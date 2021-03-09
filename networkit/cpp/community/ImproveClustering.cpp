@@ -51,9 +51,9 @@ namespace NetworKit {
             std::cout << i << "\n";
             alpha = alpha_0;
 
-            //MinCutStoerWagner minCut(flowGraph);
-            //minCut.run();
-            Partition minCutPartition = initPartition;//minCut.getPartition();
+            MinCutStoerWagner minCut(flowGraph);
+            minCut.run();
+            Partition minCutPartition = minCut.getPartition();
 
             std::map<index, count> minCutSizes = minCutPartition.subsetSizeMap();
             index minS = std::min_element(
@@ -62,12 +62,12 @@ namespace NetworKit {
                              [](const auto &l, const auto &r){ return l.second < r.second;}
                              )->first;
 
-            /*alpha_0 = relativeQuotientScore(
+            alpha_0 = relativeQuotientScore(
                 G,
                 initPartitionSet1,
                 minCutPartition.getMembers(minCutPartition.subsetOf(s))
                 );
-*/
+
             result = minCutPartition;
 
         } while (alpha_0 <= alpha and i < 3);
@@ -83,7 +83,7 @@ namespace NetworKit {
         double d = 0.0;
 
         for (const auto &n: S){
-            d += A.count(n) ? 1.0 : f_a;
+            d += A.count(n) ? 1.0 : -f_a;
         }
 
         double deltaS = 0.0;
