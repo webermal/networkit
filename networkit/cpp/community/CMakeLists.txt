@@ -25,6 +25,8 @@ networkit_add_module(community
     Modularity.cpp
     NMIDistance.cpp
     NodeStructuralRandMeasure.cpp
+    ImproveClustering.cpp
+    MinCutStoerWagner.cpp
     PLM.cpp
     PLP.cpp
     ParallelAgglomerativeClusterer.cpp
