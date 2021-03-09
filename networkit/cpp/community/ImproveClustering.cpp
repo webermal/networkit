@@ -10,14 +10,21 @@
 
 namespace NetworKit {
 
-    ImproveClustering::ImproveClustering(const Graph &G, const Partition &initPartition): CommunityDetectionAlgorithm(G, initPartition) {}
+    ImproveClustering::ImproveClustering(const Graph &G, const Partition &initPartition):
+      CommunityDetectionAlgorithm(G, initPartition), flowGraph(G) {
+
+        s = flowGraph.addNode();
+        t = flowGraph.addNode();
+        // TODO check if initPartition has exactely two Groups
+
+    }
     //ImproveClustering::ImproveClustering(const Graph &G, const Partition &initPartition): G(&G), initPartition(initPartition){}
 
     void ImproveClustering::run() {
         result = initPartition;
         std::map<index, count> sizes = initPartition.subsetSizeMap();
         index s = std::min_element(sizes.begin(), sizes.end(),[](const auto &l, const auto &r){ return l.second < r.second;})->first;
-        float alpha_0 = relativeQuotientScore(*G, initPartition.getMembers(s), initPartition.getMembers(s));
+        float alpha_0 = relativeQuotientScore(G, initPartition.getMembers(s), initPartition.getMembers(s));
         float alpha;
         int i = 0;
         do {
@@ -31,7 +38,7 @@ namespace NetworKit {
 
             std::map<index, count> minCutSizes = minCutPartition.subsetSizeMap();
             index minS = std::min_element(minCutSizes.begin(), minCutSizes.end(),[](const auto &l, const auto &r){ return l.second < r.second;})->first;
-            alpha_0 = relativeQuotientScore(*G, initPartition.getMembers(s), minCutPartition.getMembers(minS));
+            alpha_0 = relativeQuotientScore(G, initPartition.getMembers(s), minCutPartition.getMembers(minS));
 
             result = minCutPartition;
 
@@ -40,8 +47,8 @@ namespace NetworKit {
         hasRun = true;
     }
 
-    float ImproveClustering::relativeQuotientScore(const Graph &G, std::set<node> A, std::set<node> S){
-        float f = (float)A.size() / (float)(G.numberOfNodes() - A.size());
+    float ImproveClustering::relativeQuotientScore(const Graph* G, std::set<node> A, std::set<node> S){
+        float f = (float)A.size() / (float)(G->numberOfNodes() - A.size());
         float d = 0;
 
         for (const auto &n: S){
@@ -51,9 +58,9 @@ namespace NetworKit {
         float deltaS = 0;
 
         for (const auto &n: S){
-            G.forNeighborsOf(n, [&](const node u, const node v){
+            G->forNeighborsOf(n, [&](const node u, const node v){
                 if (!S.count(v)){
-                    deltaS += G.weight(u,v);
+                    deltaS += G->weight(u,v);
                 }
             });
         }
