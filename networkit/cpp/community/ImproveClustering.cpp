@@ -53,7 +53,9 @@ namespace NetworKit {
         INFO("FLOW GRAPH deg t", flowGraph.degree(t));
 
         INFO("Init Partition", result.getVector());
-        double alpha_0 = relativeQuotientScore(result);
+        EdgeCut ec;
+        double boundaryA = ec.getQuality(result, *G);
+        double alpha_0 = boundaryA/std::min(A.size(), (G->numberOfNodes() - A.size()));
         double alpha;
         int i = 0;
         do {
@@ -112,7 +114,6 @@ namespace NetworKit {
     double ImproveClustering::relativeQuotientScore(const Partition& p){
 
         S = p.getMembers(p.subsetOf(s));
-
         S.erase(s);
         S.erase(t);
 
@@ -136,7 +137,7 @@ namespace NetworKit {
 
         // Compute the Cut-Value of S / complement(S)
         EdgeCut ec;
-        double boundaryS = ec.getQuality(p, *G);
+        double boundaryS = ec.getQuality(p, flowGraph);
 
         INFO("DELTA S: ", boundaryS);
         INFO("D: ", dAOfS);

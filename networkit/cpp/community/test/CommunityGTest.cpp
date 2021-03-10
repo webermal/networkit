@@ -867,16 +867,16 @@ G.addEdge(3, 6, 1);
     node s = G.addNode();
     node t = G.addNode();
 
-    G.addEdge(s, 4, 4);
-    G.addEdge(s, 5, 4);
-    G.addEdge(s, 6, 4);
+    G.addEdge(s, 4, 6);
+    G.addEdge(s, 5, 6);
+    G.addEdge(s, 6, 6);
 
-    G.addEdge(0, t, 2);
-    G.addEdge(1, t, 2);
-    G.addEdge(2, t, 2);
-    G.addEdge(3, t, 2);
-    G.addEdge(7, t, 2);
-    G.addEdge(8, t, 2);
+    G.addEdge(0, t, 3);
+    G.addEdge(1, t, 3);
+    G.addEdge(2, t, 3);
+    G.addEdge(3, t, 3);
+    G.addEdge(7, t, 3);
+    G.addEdge(8, t, 3);
 
 
 MinCutStoerWagner mc(G);
