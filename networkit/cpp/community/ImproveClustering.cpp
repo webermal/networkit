@@ -2,78 +2,92 @@
 // Created by malte on 26.02.21.
 //
 
-#include "networkit/community/ImproveClustering.hpp"
+#include <networkit/community/ImproveClustering.hpp>
 #include <networkit/graph/Graph.hpp>
-#include "networkit/community/MinCutStoerWagner.hpp"
+#include <networkit/community/MinCutStoerWagner.hpp>
 #include <iostream>
 
 
 namespace NetworKit {
 
     ImproveClustering::ImproveClustering(const Graph &G, const Partition initPartition):
-      CommunityDetectionAlgorithm(G), initPartition(std::move(initPartition)), flowGraph(G) {
+      CommunityDetectionAlgorithm(G), iPartition(initPartition.getVector()), flowGraph(G) {
 
+        // add source (s) and sink (t) to the flowGraph
         s = flowGraph.addNode();
         t = flowGraph.addNode();
-        // TODO check if initPartition has exactely two Groups
-        std::map<index, count> initPartitionSizes = initPartition.subsetSizeMap();
-        minS = std::min_element(
-                         initPartitionSizes.begin(),
-                         initPartitionSizes.end(),
-                         [](const auto &l, const auto &r){ return l.second < r.second;}
-                         )->first;
 
-        initPartitionSet1 = initPartition.getMembers(minS);
-        initPartitionSet1.insert(s);
-        f_a = (double)initPartitionSet1.size()/(double)(G.numberOfNodes() - initPartitionSet1.size());
+        // TODO check if initPartition has exactely two Groups
+        iPartition.compact();
+        minS = iPartition.getMembers(0).size() < iPartition.getMembers(1).size() ? 0 : 1;
+
+        f_a = (double)iPartition.getMembers(minS).size()/
+              (double)(G.numberOfNodes() - iPartition.getMembers(minS).size());
 
         G.forNodes([&](const node n){
-            if (initPartition.subsetOf(n) == minS){
-                flowGraph.addEdge(s, n, 0);
+            if (iPartition.subsetOf(n) == minS){
+                flowGraph.addEdge(s, n, 1);
             } else {
-                flowGraph.addEdge(n, t, 0);
+                flowGraph.addEdge(n, t, 1);
             }
         });
     }
-    //ImproveClustering::ImproveClustering(const Graph &G, const Partition &initPartition): G(&G), initPartition(initPartition){}
 
     void ImproveClustering::run() {
 
-        result = initPartition;
+        INFO("FLOW GRAPH deg s", flowGraph.degree(s));
+        INFO("FLOW GRAPH deg t", flowGraph.degree(t));
 
-        updateEdgeWeights(flowGraph, relativeQuotientScore(G, initPartition.getMembers(minS), initPartition.getMembers(minS)));
-
-        double alpha_0 = relativeQuotientScore(&flowGraph, initPartitionSet1,initPartitionSet1);
+        INFO("Init Partition", iPartition.getVector());
+        double alpha_0 = relativeQuotientScore(G, iPartition.getMembers(minS), iPartition.getMembers(minS));
         double alpha;
         int i = 0;
         do {
             i += 1;
             std::cout << i << "\n";
+
+            updateEdgeWeights(alpha_0);
+
             alpha = alpha_0;
 
             MinCutStoerWagner minCut(flowGraph);
             minCut.run();
             Partition minCutPartition = minCut.getPartition();
 
-            std::map<index, count> minCutSizes = minCutPartition.subsetSizeMap();
-            index minS = std::min_element(
-                             minCutSizes.begin(),
-                             minCutSizes.end(),
-                             [](const auto &l, const auto &r){ return l.second < r.second;}
-                             )->first;
 
+            INFO("MIN CUT IN IMPROVE RUN: ", minCutPartition.getVector());
+
+            std::set<index> SetS(minCutPartition.getMembers(minCutPartition.subsetOf(s)));
+            SetS.erase(s);
             alpha_0 = relativeQuotientScore(
                 G,
-                initPartitionSet1,
-                minCutPartition.getMembers(minCutPartition.subsetOf(s))
+                iPartition.getMembers(minS),
+                SetS
                 );
+            INFO("ALPHA 0: ", alpha_0);
+            // Computing result partition
+            // TODO Do this better
+            std::vector<index> resultVec;
+            // TODO Problem if the node are not enumerated from 0 to one
+            resultVec.resize(flowGraph.upperNodeIdBound());
+            minCutPartition.compact();
 
-            result = minCutPartition;
+            std::set<index> sourceSet(minCutPartition.getMembers(minCutPartition.subsetOf(s)));
+            std::set<index> sinkSet(minCutPartition.getMembers(minCutPartition.subsetOf(t)));
 
-        } while (alpha_0 <= alpha and i < 3);
+            sourceSet.erase(s);
+            sinkSet.erase(t);
+            resultVec[s] = 2;
+            resultVec[t] = 3;
+            for (const index &i: sourceSet){
+                resultVec[i] = 0;
+            }
+            for (const index &i: sinkSet){
+                resultVec[i] = 1;
+            }
+            result = Partition(resultVec);
 
-        //result.remove(s);
-        //result.remove(t);
+        } while (i < 10);
 
         hasRun = true;
     }
@@ -82,32 +96,50 @@ namespace NetworKit {
         //double f = (double)A.size() / (double )(G->numberOfNodes() - A.size());
         double d = 0.0;
 
-        for (const auto &n: S){
-            d += A.count(n) ? 1.0 : -f_a;
+        // TODO not so ugly!!!!
+
+        INFO("SET A", A);
+        INFO("SET S", S);
+        for (const node n: S){
+            if (n != s and n != t){
+                d += A.find(n) != A.end() ? 1.0 : -f_a;
+                INFO("DDDDDD: ",d );
+            }
+
         }
+        INFO("d hat den Wert: ", d);
 
         double deltaS = 0.0;
-
-        for (const auto &n: S){
-            G->forNeighborsOf(n, [&](const node u, const node v){
-                if (!S.count(v)){
-                    deltaS += G->weight(u,v);
+        // TODO use Edgcut get Quality
+        flowGraph.forEdges([&](const node u, const node v, const edgeweight w){
+            if (u != t and v != t and u != s and v != s){
+                if ((S.count(u) and !S.count(v)) or (!S.count(u) and S.count(v))){
+                    INFO("NODE ", v, " TO NODE ", u, " WITH WEIGHT ",  w);
+                    deltaS += w;
                 }
-            });
-        }
+            }
+        });
 
+        flowGraph.forEdges([&](const node u, const node v, const edgeweight w){
+            INFO(" EDGE: ", u, " TO " ,v , " WITH WEIGHT ", w );
+        });
+
+        INFO("DELTA S: ", deltaS);
+        INFO("D: ", d);
         double q = d > 0.0 ? deltaS/d : std::numeric_limits<double>::max();
 
         return q;
     }
 
-    void ImproveClustering::updateEdgeWeights(Graph G, double alpha){
-        G.forNeighborsOf(s, [&](node n){
-            G.setWeight(s, n, alpha);
+    void ImproveClustering::updateEdgeWeights(double alpha){
+        flowGraph.forNeighborsOf(s, [&](node n){
+            flowGraph.setWeight(s, n, alpha);
+            INFO("ALPHA: ", alpha);
         });
 
-        G.forNeighborsOf(t, [&](node n){
-            G.setWeight(n, t, alpha*f_a);
+        flowGraph.forNeighborsOf(t, [&](node n){
+            flowGraph.setWeight(n, t, alpha*f_a);
+            INFO("ALPHA*FA: ", alpha*f_a);
         });
     }
 }
