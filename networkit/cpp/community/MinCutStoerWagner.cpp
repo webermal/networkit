@@ -93,7 +93,7 @@ Partition MinCutStoerWagner::phase(node a) {
 	node t = pq.extractMin().second;
 
 	// transform A to fit on the whole graph G
-	current_graph.forNodes([&](node u) {
+	G->forNodes([&](node u) {
 		result.moveToSubset(A[node_mapping[u]], u);
 	});
 
