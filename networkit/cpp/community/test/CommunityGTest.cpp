@@ -41,6 +41,7 @@
 #include <networkit/community/CoverF1Similarity.hpp>
 #include <networkit/community/MinCutStoerWagner.hpp>
 #include <networkit/community/ImproveClustering.hpp>
+#include <networkit/io/EdgeListReader.hpp>
 
 #include <tlx/unused.hpp>
 
@@ -748,7 +749,7 @@ TEST_F(CommunityGTest, tryMinCutStoerWagner2) {
 }
 
 TEST_F(CommunityGTest, testImproveClustering0){
-    count n = 8;
+    count n = 9;
     Graph G(n, true, false);
 
 	G.addEdge(0, 1, 1);
@@ -763,9 +764,27 @@ TEST_F(CommunityGTest, testImproveClustering0){
     G.addEdge(5, 6, 1);
     G.addEdge(5, 7, 1);
     G.addEdge(6, 7, 1);
+    G.addEdge(8,5, 1);
+    G.addEdge(8,7,1);
+
 
     G.addEdge(1, 4, 1);
     G.addEdge(3, 6, 1);
+/*
+    node s = G.addNode();
+    node t = G.addNode();
+
+    G.addEdge(s, 4, 3);
+    G.addEdge(s, 5, 3);
+    G.addEdge(s, 6, 3);
+
+    G.addEdge(0, t, 1.5);
+    G.addEdge(1, t, 1.5);
+    G.addEdge(2, t, 1.5);
+    G.addEdge(3, t, 1.5);
+    G.addEdge(7, t, 1.5);
+    G.addEdge(8, t, 1.5);
+*/
 
     std::vector<index> partitionVec;
 
@@ -773,13 +792,21 @@ TEST_F(CommunityGTest, testImproveClustering0){
     partitionVec.push_back(1);
     partitionVec.push_back(1);
     partitionVec.push_back(1);
+    partitionVec.push_back(2);
+    partitionVec.push_back(2);
+    partitionVec.push_back(2);
     partitionVec.push_back(1);
-    partitionVec.push_back(2);
-    partitionVec.push_back(2);
-    partitionVec.push_back(2);
+    partitionVec.push_back(1);
+    //partitionVec.push_back(1);
+    //partitionVec.push_back(2);
 
 
     Partition partition(partitionVec);
+    Modularity mod;
+
+    double m = mod.getQuality(partition, G);
+
+    INFO("MODULARITY OF INIT PARTITION", m);
 
     INFO("SIZE OF G: ", G.numberOfNodes());
     INFO("SZE OF PARTITION 1: ", partition.subsetSizeMap()[1]);
@@ -793,6 +820,7 @@ TEST_F(CommunityGTest, testImproveClustering0){
 
     INFO("RESULT", result.getVector());
 
+        /*
     MinCutStoerWagner mc(G);
 
     mc.run();
@@ -801,21 +829,92 @@ TEST_F(CommunityGTest, testImproveClustering0){
 
     partition1.compact();
 
-    INFO("COMPACT PARTITION MC", partition1.getMembers(1));
+    INFO("COMPACT PARTITION MC", partition1.getVector());
+*/
 
+}
+
+TEST_F(CommunityGTest, testMinCutStoerWagner){
+count n = 9;
+Graph G(n, true, false);
+
+G.addEdge(0, 1, 1);
+G.addEdge(0, 2, 1);
+G.addEdge(0, 3, 1);
+
+G.addEdge(1, 2, 1);
+G.addEdge(1, 3, 1);
+
+G.addEdge(2, 3, 1);
+
+G.addEdge(4, 5, 1);
+G.addEdge(4, 6, 1);
+G.addEdge(4, 7, 1);
+
+G.addEdge(5, 6, 1);
+G.addEdge(5, 7, 1);
+
+G.addEdge(6, 7, 1);
+
+G.addEdge(8,5, 1);
+G.addEdge(8,7,1);
+
+
+G.addEdge(1, 4, 1);
+G.addEdge(3, 6, 1);
+
+    node s = G.addNode();
+    node t = G.addNode();
+
+    G.addEdge(s, 4, 4);
+    G.addEdge(s, 5, 4);
+    G.addEdge(s, 6, 4);
+
+    G.addEdge(0, t, 2);
+    G.addEdge(1, t, 2);
+    G.addEdge(2, t, 2);
+    G.addEdge(3, t, 2);
+    G.addEdge(7, t, 2);
+    G.addEdge(8, t, 2);
+
+
+MinCutStoerWagner mc(G);
+
+mc.run();
+
+Partition partition1 = mc.getPartition();
+
+//partition1.compact();
+
+INFO("COMPACT PARTITION MC", partition1.getVector());
 
 }
 
 TEST_F(CommunityGTest, testImproveClustering) {
     METISGraphReader reader;
-    Graph G = reader.read("../input/lesmis.graph");
+    Graph unweightedG = reader.read("../input/polblogs.graph");
 
-    ClusteringGenerator cg;
+    Graph G(unweightedG, true, false);
+    G.forEdges([&](node u, node v){
+        G.setWeight(u, v, 1);
+    });
 
-    INFO("Graph weighted?", G.isWeighted());
+    std::vector<node> initVec;
+    initVec.resize(G.upperNodeIdBound());
+    INFO("Number of Nodes in G", G.numberOfNodes());
+    INFO("Upper Node ID Bound", G.upperNodeIdBound());
 
-    Partition partition = cg.makeRandomClustering(G, 2);
+    for (int i = 0; i < G.upperNodeIdBound()-1; ++i){
+        if (i < G.upperNodeIdBound()/2){
+            initVec[i] = 0;
+        } else {
+            initVec[i] = 1;
+        }
+    }
 
+    Partition partition(initVec);
+
+    INFO("CLUSTERING: ", partition.getVector());
     Modularity modularity1;
 
     double m = modularity1.getQuality(partition, G);
@@ -824,6 +923,31 @@ TEST_F(CommunityGTest, testImproveClustering) {
     INFO("Modularity of random clustering: ", m);
 
     EXPECT_EQ(2, partition.getSubsetIds().size());
+
+
+   // MinCutStoerWagner mc(G);
+
+   // mc.run();
+
+   // Partition partition = mc.getPartition();
+
+   // INFO("MC Partition", partition.getVector());
+
+    //Modularity modularity1;
+    //double m = modularity1.getQuality(partition, G);
+
+    //INFO("Size of random clustering: ", partition.subsetSizes().size());
+    //INFO("Modularity of random clustering: ", m);
+/*
+    PLP plp(G);
+
+    plp.run();
+
+    Partition partition2 = plp.getPartition();
+
+    INFO("PLM Partition", partition2.getVector());
+*/
+
 
     ImproveClustering ic(G, partition);
 
