@@ -1068,6 +1068,61 @@ cdef class CoverF1Similarity(LocalCoverEvaluation):
 		assert(self._G == G)
 		assert(self._C == C)
 
+cdef extern from "<networkit/community/MinCutStoerWagner.hpp>":
+
+	cdef cppclass _MinCutStoerWagner "NetworKit::MinCutStoerWagner"(_Algorithm):
+		_MinCutStoerWagner(_Graph _G) except +
+		_Partition getPartition() except +
+
+
+cdef class MinCutStoerWagner(Algorithm):
+	""" Stoer-Wagner algorithm for the min-cut problem.
+
+		Parameters:
+		-----------
+		G : networkit.Graph
+			A graph.
+	"""
+
+	cdef Graph _G
+	def __cinit__(self, Graph G not None):
+		self._G = G
+		self._this = new _MinCutStoerWagner(G._this)
+	
+	def getPartition(self):
+		"""  Returns the partition computed by the algorithm.
+
+			Returns:
+			--------
+			networkit.Partition:
+				The partition computed by the algorithm.
+		"""
+		if self._this == NULL:
+			raise RuntimeError("Error, object not properly initialized")
+		return Partition().setThis((<_MinCutStoerWagner*>(self._this)).getPartition())
+
+cdef extern from "<networkit/community/ImproveClustering.hpp>":
+
+	cdef cppclass _ImproveClustering "NetworKit::ImproveClustering"(_CommunityDetectionAlgorithm):
+		_ImproveClustering(_Graph _G, _Partition _initial_partition) except +
+
+
+cdef class ImproveClustering(CommunityDetector):
+	""" Stoer-Wagner algorithm for the min-cut problem.
+
+		Parameters:
+		-----------
+		G : networkit.Graph
+			A graph.
+		initial_partition : networkit.Partition
+			The partition to be improved.
+	"""
+
+	def __cinit__(self, Graph G not None, Partition initial_partition):
+		self._G = G
+		self._this = new _ImproveClustering(G._this, initial_partition._this)
+		
+
 def detectCommunities(G, algo=None, inspect=True):
 	""" Perform high-performance community detection on the graph.
 		:param    G    the graph
