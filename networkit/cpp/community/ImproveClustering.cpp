@@ -79,33 +79,6 @@ namespace NetworKit {
 
             INFO("ALPHA 0: ", alpha_0);
 
-            /*
-            // Computing result partition
-            // TODO Do this better
-            std::vector<index> resultVec;
-            // TODO Problem if the node are not enumerated from 0 to one
-
-
-            resultVec.resize(flowGraph.upperNodeIdBound());
-            minCutPartition.compact();
-
-
-            std::set<index> sourceSet(minCutPartition.getMembers(minCutPartition.subsetOf(s)));
-            std::set<index> sinkSet(minCutPartition.getMembers(minCutPartition.subsetOf(t)));
-
-            sourceSet.erase(s);
-            sinkSet.erase(t);
-            resultVec[s] = 2;
-            resultVec[t] = 3;
-            for (const index &i: sourceSet){
-                resultVec[i] = 0;
-            }
-            for (const index &i: sinkSet){
-                resultVec[i] = 1;
-            }
-            result = Partition(resultVec);
-            */
-
         } while (i < 10);
 
         hasRun = true;
@@ -114,8 +87,6 @@ namespace NetworKit {
     double ImproveClustering::relativeQuotientScore(const Partition& p){
 
         S = p.getMembers(p.subsetOf(s));
-        S.erase(s);
-        S.erase(t);
 
         double dAOfS = 0.0;
         for (const node n: S){
@@ -123,17 +94,6 @@ namespace NetworKit {
         }
 
         INFO("d hat den Wert: ", dAOfS);
-/*
-        double deltaS = 0.0;
-        flowGraph.forEdges([&](const node u, const node v, const edgeweight w){
-            if (u != t and v != t and u != s and v != s){
-                if ((S.count(u) and !S.count(v)) or (!S.count(u) and S.count(v))){
-                    INFO("NODE ", v, " TO NODE ", u, " WITH WEIGHT ",  w);
-                    deltaS += w;
-                }
-            }
-        });
-       */
 
         // Compute the Cut-Value of S / complement(S)
         EdgeCut ec;
