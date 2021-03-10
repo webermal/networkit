@@ -805,6 +805,85 @@ INFO("Quality of partition: ", q2);
 EXPECT_TRUE(q <= q2);
 
 }
+TEST_F(CommunityGTest, testMinCutStoerWagner3){
+count n = 11;
+Graph G(n, true, false);
+
+G.addEdge(0, 1, 1);
+G.addEdge(0, 2, 1);
+G.addEdge(0, 3, 1);
+
+G.addEdge(1, 2, 1);
+G.addEdge(1, 3, 1);
+
+G.addEdge(2, 3, 1);
+
+G.addEdge(4, 5, 1);
+G.addEdge(4, 6, 1);
+G.addEdge(4, 7, 1);
+
+G.addEdge(5, 6, 1);
+G.addEdge(5, 7, 1);
+
+G.addEdge(6, 7, 1);
+
+G.addEdge(8,5, 1);
+G.addEdge(8,7,1);
+
+
+G.addEdge(1, 4, 1);
+G.addEdge(3, 6, 1);
+
+
+G.addEdge(9, 4, 6);
+G.addEdge(9, 5, 6);
+G.addEdge(9, 6, 6);
+
+G.addEdge(0, 10, 3);
+G.addEdge(1, 10, 3);
+G.addEdge(2, 10, 3);
+G.addEdge(3, 10, 3);
+G.addEdge(7, 10, 3);
+G.addEdge(8, 10, 3);
+
+
+MinCutStoerWagner mc(G);
+
+mc.run();
+
+Partition partition1 = mc.getPartition();
+
+INFO("PARTITION MC", partition1.getVector());
+
+EdgeCut ec;
+
+double q = ec.getQuality(partition1, G);
+
+std::vector<node> secondVec;
+
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(1);
+secondVec.push_back(0);
+secondVec.push_back(0);
+
+Partition partition2(secondVec);
+
+double q2 = ec.getQuality(partition2, G);
+
+INFO("SECOND Partition: ", partition2.getVector());
+INFO("Quality of MinCut: ", q);
+INFO("Quality of partition: ", q2);
+
+EXPECT_TRUE(q <= q2);
+
+}
 TEST_F(CommunityGTest, tryImproveClustering0) {
     count n = 6;
     Graph G(n);
