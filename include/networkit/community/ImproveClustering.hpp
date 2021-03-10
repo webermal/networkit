@@ -12,17 +12,15 @@ namespace NetworKit {
 
     private:
         Graph flowGraph;
-        Partition flowPartition;
         node s;
         node t;
-        std::set<node> initPartitionSet1;
+        std::set<node> A;
+        std::set<node> S;
         double f_a;
         index minS;
 
-        double relativeQuotientScore(const Graph* G, std::set<node> A, std::set<node> S);
+        double relativeQuotientScore(const Partition& p);
         void updateEdgeWeights(double alpha);
-
-        Partition iPartition;
 
     public:
 
