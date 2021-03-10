@@ -42,6 +42,7 @@
 #include <networkit/community/MinCutStoerWagner.hpp>
 #include <networkit/community/ImproveClustering.hpp>
 #include <networkit/io/EdgeListReader.hpp>
+#include <networkit/community/GraphClusteringTools.hpp>
 
 #include <tlx/unused.hpp>
 
@@ -966,5 +967,32 @@ TEST_F(CommunityGTest, testImproveClustering) {
 
 }
 
+TEST_F(CommunityGTest, properClustering){
+    node n = 4;
+    Graph G(n, true, false);
+
+    G.addEdge(0, 1, 1);
+    G.addEdge(1,2,1);
+    G.addEdge(2,3,1);
+
+
+    std::vector<node> v;
+    v.push_back(0);
+    v.push_back(0);
+    v.push_back(1);
+    v.push_back(1);
+    v.push_back(1);
+
+    Partition p(v);
+
+    EdgeCut ec;
+
+    INFO("IS PROPER: ", GraphClusteringTools::isProperClustering(G, p));
+    INFO("CUT VALUE: ", ec.getQuality(p, G));
+
+
+
+
+}
 
 } /* namespace NetworKit */
