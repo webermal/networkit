@@ -793,7 +793,6 @@ secondVec.push_back(0);
 secondVec.push_back(1);
 secondVec.push_back(0);
 secondVec.push_back(0);
-secondVec.push_back(0);
 
 Partition partition2(secondVec);
 
@@ -803,7 +802,7 @@ INFO("SECOND Partition: ", partition2.getVector());
 INFO("Quality of MinCut: ", q);
 INFO("Quality of partition: ", q2);
 
-EXPECT_TRUE(q < q2);
+EXPECT_TRUE(q <= q2);
 
 }
 TEST_F(CommunityGTest, tryImproveClustering0) {
