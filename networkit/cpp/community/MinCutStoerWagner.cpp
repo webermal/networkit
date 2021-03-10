@@ -97,7 +97,12 @@ Partition MinCutStoerWagner::phase(node a) {
 		result.moveToSubset(A[node_mapping[u]], u);
 	});
 
-	node_mapping[s] = t;
+	// update node mapping
+	G->forNodes([&](node u){
+		if (node_mapping[u] == s) {
+			node_mapping[u] = t;
+		}
+	});
 
 	// shrink G by merging s and t
 	current_graph.forNeighborsOf(s, [&](node u, edgeweight weight) {
