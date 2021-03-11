@@ -90,7 +90,11 @@ namespace NetworKit {
 
         double dAOfS = 0.0;
         for (const node n: S){
-            dAOfS += A.find(n) != A.end() ? 1.0 : -f_a;
+            if (A.find(n) != A.end()){
+                dAOfS += 1.0;
+            } else if (G->hasNode(n)){
+                dAOfS -= f_a;
+            }
         }
 
         INFO("d hat den Wert: ", dAOfS);
