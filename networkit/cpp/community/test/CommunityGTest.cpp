@@ -835,19 +835,19 @@ G.addEdge(1, 4, 1);
 G.addEdge(3, 6, 1);
 
 
-G.addEdge(9, 4, 6);
-G.addEdge(9, 5, 6);
-G.addEdge(9, 6, 6);
+G.addEdge(9, 4, 2);
+G.addEdge(9, 5, 2);
+G.addEdge(9, 6, 2);
 
-G.addEdge(0, 10, 3);
-G.addEdge(1, 10, 3);
-G.addEdge(2, 10, 3);
-G.addEdge(3, 10, 3);
-G.addEdge(7, 10, 3);
-G.addEdge(8, 10, 3);
+G.addEdge(0, 10, 1);
+G.addEdge(1, 10, 1);
+G.addEdge(2, 10, 1);
+G.addEdge(3, 10, 1);
+G.addEdge(7, 10, 1);
+G.addEdge(8, 10, 1);
 
 
-MinCutStoerWagner mc(G);
+MinCutStoerWagner mc(G,9,10);
 
 mc.run();
 
@@ -865,12 +865,12 @@ secondVec.push_back(0);
 secondVec.push_back(0);
 secondVec.push_back(0);
 secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
 secondVec.push_back(1);
-secondVec.push_back(0);
+secondVec.push_back(1);
+secondVec.push_back(1);
+secondVec.push_back(1);
+secondVec.push_back(1);
+secondVec.push_back(1);
 secondVec.push_back(0);
 
 Partition partition2(secondVec);
@@ -882,6 +882,77 @@ INFO("Quality of MinCut: ", q);
 INFO("Quality of partition: ", q2);
 
 EXPECT_TRUE(q <= q2);
+
+}
+TEST_F(CommunityGTest, testImproveClustering2){
+count n = 9;
+Graph G(n, true, false);
+
+G.addEdge(0, 1, 1);
+G.addEdge(0, 2, 1);
+G.addEdge(0, 3, 1);
+
+G.addEdge(1, 2, 1);
+G.addEdge(1, 3, 1);
+
+G.addEdge(2, 3, 1);
+
+G.addEdge(4, 5, 1);
+G.addEdge(4, 6, 1);
+G.addEdge(4, 7, 1);
+
+G.addEdge(5, 6, 1);
+G.addEdge(5, 7, 1);
+
+G.addEdge(6, 7, 1);
+
+G.addEdge(8,5, 1);
+G.addEdge(8,7,1);
+
+
+G.addEdge(1, 4, 1);
+G.addEdge(3, 6, 1);
+
+
+//G.addEdge(9, 4, 6);
+//G.addEdge(9, 5, 6);
+//G.addEdge(9, 6, 6);
+//
+//G.addEdge(0, 10, 3);
+//G.addEdge(1, 10, 3);
+//G.addEdge(2, 10, 3);
+//G.addEdge(3, 10, 3);
+//G.addEdge(7, 10, 3);
+//G.addEdge(8, 10, 3);
+
+
+//MinCutStoerWagner mc(G);
+
+//mc.run();
+
+//Partition partition1 = mc.getPartition();
+
+
+
+std::vector<node> secondVec;
+
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(0);
+secondVec.push_back(1);
+secondVec.push_back(1);
+secondVec.push_back(1);
+secondVec.push_back(0);
+secondVec.push_back(0);
+
+Partition partition2(secondVec);
+
+ImproveClustering ic(G, partition2);
+
+ic.run();
+
+INFO("RESULT: ", ic.getPartition().getVector());
 
 }
 TEST_F(CommunityGTest, tryImproveClustering0) {
@@ -905,12 +976,12 @@ TEST_F(CommunityGTest, tryImproveClustering0) {
     mc.run();
 
     Partition p = mc.getPartition();
-    //ImproveClustering ic(G, initial);
-    //ic.run();
-    //Partition result = ic.getPartition();
+    ImproveClustering ic(G, initial);
+    ic.run();
+    Partition result = ic.getPartition();
 
-    //EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
-    //EXPECT_EQ(2, result.getSubsetIds().size());
+    EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
+    EXPECT_EQ(2, result.getSubsetIds().size());
 }
 
 
