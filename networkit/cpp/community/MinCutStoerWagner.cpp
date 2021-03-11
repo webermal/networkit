@@ -7,6 +7,8 @@
 
 #include <sstream>
 
+#include <iostream>
+
 #include <networkit/community/MinCutStoerWagner.hpp>
 #include <networkit/community/EdgeCut.hpp>
 #include <networkit/graph/GraphTools.hpp>
@@ -17,7 +19,15 @@ namespace NetworKit {
 
 MinCutStoerWagner::MinCutStoerWagner(const Graph &G) :
 		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound()),
-				keys(G.upperNodeIdBound()) {
+				keys(G.upperNodeIdBound()), s(0), t(0), s_t_cut(false) {
+	G.forNodes([&](node u) {
+		node_mapping.push_back(u);
+	});
+}
+
+MinCutStoerWagner::MinCutStoerWagner(const Graph &G, node s, node t) :
+		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound()),
+						keys(G.upperNodeIdBound()), s(s), t(t), s_t_cut(true) {
 	G.forNodes([&](node u) {
 		node_mapping.push_back(u);
 	});
@@ -29,8 +39,13 @@ void MinCutStoerWagner::run() {
 	EdgeCut ec;
 
 	while (current_graph.numberOfNodes() > 1) {
-		Partition current_solution = phase(0);
+		Partition current_solution = phase(s_t_cut ? s : 0);
 		double current_cut = ec.getQuality(current_solution, *G);
+		if (s_t_cut && current_solution[s] != current_solution[t]) {
+			result = current_solution;
+			hasRun = true;
+			return;
+		}
 
 		if (current_cut < best_cut) {
 			best_solution = current_solution;

@@ -26,6 +26,13 @@ public:
     MinCutStoerWagner(const Graph& G);
 
     /**
+	 * @param[in] G input graph
+	 * @param[in] s vertex s for s-t min-cut
+	 * @param[in] t vertex t for s-t min-cut
+	 */
+	MinCutStoerWagner(const Graph& G, node s, node t);
+
+    /**
      * Get string representation.
      *
      * @return String representation of this algorithm.
@@ -46,6 +53,9 @@ public:
 private:
     
     const Graph* G;
+    node s, t;
+    bool s_t_cut;
+
     Graph current_graph;
     std::vector<node> node_mapping;
     Aux::PrioQueue<double, node> pq;
