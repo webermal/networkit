@@ -5,7 +5,6 @@
  *      Author: cls
  */
 
-
 #include <gtest/gtest.h>
 
 #include <networkit/community/PLP.hpp>
@@ -42,7 +41,8 @@
 #include <networkit/community/CoverF1Similarity.hpp>
 #include <networkit/community/MinCutStoerWagner.hpp>
 #include <networkit/community/ImproveClustering.hpp>
-#include <networkit/community/EdgeCut.hpp>
+#include <networkit/io/EdgeListReader.hpp>
+#include <networkit/community/GraphClusteringTools.hpp>
 
 #include <tlx/unused.hpp>
 
@@ -701,190 +701,141 @@ TEST_F(CommunityGTest, testCoverF1Similarity) {
 }
 
 TEST_F(CommunityGTest, tryMinCutStoerWagner) {
-	count n = 8;
-	Graph G(n, true);
+//	count n = 6;
+//	Graph G(n);
+//
+//	G.addEdge(0, 2);
+//	G.addEdge(1, 2);
+//	G.addEdge(2, 3);
+//	G.addEdge(2, 4);
+//	G.addEdge(3, 5);
+//	G.addEdge(4, 5);
 
-	G.addEdge(0, 1, 2);
-	G.addEdge(0, 4, 3);
-	G.addEdge(1, 2, 3);
-	G.addEdge(1, 4, 2);
-	G.addEdge(1, 5, 2);
-	G.addEdge(2, 3, 4);
-	G.addEdge(2, 6, 2);
-	G.addEdge(3, 6, 2);
-	G.addEdge(3, 7, 2);
-	G.addEdge(4, 5, 3);
-	G.addEdge(5, 6, 1);
-	G.addEdge(6, 7, 3);
+    METISGraphReader reader;
+    Graph G = reader.read("../input/PGPgiantcompo.graph");
 
     MinCutStoerWagner sw(G);
     sw.run();
     Partition result = sw.getPartition();
 
+    INFO("MINCUT: ", result.getVector());
+
     EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
     EXPECT_EQ(2, result.getSubsetIds().size());
-    EXPECT_DOUBLE_EQ(4, EdgeCut().getQuality(result, G));
 }
 
-TEST_F(CommunityGTest, testMinCutStoerWagner2){
-count n = 11;
-Graph G(n, true, false);
+TEST_F(CommunityGTest, tryMinCutStoerWagner2) {
+	count n = 6;
+	Graph G(n);
 
-G.addEdge(0, 1, 1);
-G.addEdge(0, 2, 1);
-G.addEdge(0, 3, 1);
+	G.addEdge(0, 2);
+	G.addEdge(1, 2);
+	G.addEdge(2, 3);
+	G.addEdge(2, 4);
+	G.addEdge(3, 5);
+	G.addEdge(4, 5);
 
-G.addEdge(1, 2, 1);
-G.addEdge(1, 3, 1);
+	//METISGraphReader reader;
+	//Graph G = reader.read("../input/polblogs.graph");
 
-G.addEdge(2, 3, 1);
-
-G.addEdge(4, 5, 1);
-G.addEdge(4, 6, 1);
-G.addEdge(4, 7, 1);
-
-G.addEdge(5, 6, 1);
-G.addEdge(5, 7, 1);
-
-G.addEdge(6, 7, 1);
-
-G.addEdge(8,5, 1);
-G.addEdge(8,7,1);
+    MinCutStoerWagner sw(G);
+    sw.run();
+    Partition result = sw.getPartition();
 
 
-G.addEdge(1, 4, 1);
-G.addEdge(3, 6, 1);
+    INFO("MINCUT: ", result.getVector());
+
+    EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
+    EXPECT_EQ(2, result.getSubsetIds().size());
+}
+
+TEST_F(CommunityGTest, testImproveClustering0){
+    count n = 9;
+    Graph G(n, true, false);
+
+	G.addEdge(0, 1, 1);
+    G.addEdge(0, 2, 1);
+    G.addEdge(0, 3, 1);
+    G.addEdge(1, 2, 1);
+    G.addEdge(1, 3, 1);
+    G.addEdge(2, 3, 1);
+    G.addEdge(4, 5, 1);
+    G.addEdge(4, 6, 1);
+    G.addEdge(4, 7, 1);
+    G.addEdge(5, 6, 1);
+    G.addEdge(5, 7, 1);
+    G.addEdge(6, 7, 1);
+    G.addEdge(8,5, 1);
+    G.addEdge(8,7,1);
 
 
-G.addEdge(9, 4, 4);
-G.addEdge(9, 5, 4);
-G.addEdge(9, 6, 4);
+    G.addEdge(1, 4, 1);
+    G.addEdge(3, 6, 1);
+/*
+    node s = G.addNode();
+    node t = G.addNode();
 
-G.addEdge(0, 10, 2);
-G.addEdge(1, 10, 2);
-G.addEdge(2, 10, 2);
-G.addEdge(3, 10, 2);
-G.addEdge(7, 10, 2);
-G.addEdge(8, 10, 2);
+    G.addEdge(s, 4, 3);
+    G.addEdge(s, 5, 3);
+    G.addEdge(s, 6, 3);
+
+    G.addEdge(0, t, 1.5);
+    G.addEdge(1, t, 1.5);
+    G.addEdge(2, t, 1.5);
+    G.addEdge(3, t, 1.5);
+    G.addEdge(7, t, 1.5);
+    G.addEdge(8, t, 1.5);
+*/
+
+    std::vector<index> partitionVec;
+
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    partitionVec.push_back(2);
+    partitionVec.push_back(2);
+    partitionVec.push_back(2);
+    partitionVec.push_back(1);
+    partitionVec.push_back(1);
+    //partitionVec.push_back(1);
+    //partitionVec.push_back(2);
 
 
-MinCutStoerWagner mc(G);
+    Partition partition(partitionVec);
+    Modularity mod;
 
-mc.run();
+    double m = mod.getQuality(partition, G);
 
-Partition partition1 = mc.getPartition();
+    INFO("MODULARITY OF INIT PARTITION", m);
 
-INFO("PARTITION MC", partition1.getVector());
+    INFO("SIZE OF G: ", G.numberOfNodes());
+    INFO("SZE OF PARTITION 1: ", partition.subsetSizeMap()[1]);
+    INFO("SIZE OF PARTITION 2.: ", partition.subsetSizeMap()[2]);
 
-EdgeCut ec;
+    ImproveClustering ic(G, partition);
 
-double q = ec.getQuality(partition1, G);
+    ic.run();
 
-std::vector<node> secondVec;
+    Partition result = ic.getPartition();
 
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(1);
-secondVec.push_back(0);
-secondVec.push_back(0);
+    INFO("RESULT", result.getVector());
 
-Partition partition2(secondVec);
+        /*
+    MinCutStoerWagner mc(G);
 
-double q2 = ec.getQuality(partition2, G);
+    mc.run();
 
-INFO("SECOND Partition: ", partition2.getVector());
-INFO("Quality of MinCut: ", q);
-INFO("Quality of partition: ", q2);
+    Partition partition1 = mc.getPartition();
 
-EXPECT_TRUE(q <= q2);
+    partition1.compact();
+
+    INFO("COMPACT PARTITION MC", partition1.getVector());
+*/
 
 }
-TEST_F(CommunityGTest, testMinCutStoerWagner3){
-count n = 11;
-Graph G(n, true, false);
 
-G.addEdge(0, 1, 1);
-G.addEdge(0, 2, 1);
-G.addEdge(0, 3, 1);
-
-G.addEdge(1, 2, 1);
-G.addEdge(1, 3, 1);
-
-G.addEdge(2, 3, 1);
-
-G.addEdge(4, 5, 1);
-G.addEdge(4, 6, 1);
-G.addEdge(4, 7, 1);
-
-G.addEdge(5, 6, 1);
-G.addEdge(5, 7, 1);
-
-G.addEdge(6, 7, 1);
-
-G.addEdge(8,5, 1);
-G.addEdge(8,7,1);
-
-
-G.addEdge(1, 4, 1);
-G.addEdge(3, 6, 1);
-
-
-G.addEdge(9, 4, 2);
-G.addEdge(9, 5, 2);
-G.addEdge(9, 6, 2);
-
-G.addEdge(0, 10, 1);
-G.addEdge(1, 10, 1);
-G.addEdge(2, 10, 1);
-G.addEdge(3, 10, 1);
-G.addEdge(7, 10, 1);
-G.addEdge(8, 10, 1);
-
-
-MinCutStoerWagner mc(G,9,10);
-
-mc.run();
-
-Partition partition1 = mc.getPartition();
-
-INFO("PARTITION MC", partition1.getVector());
-
-EdgeCut ec;
-
-double q = ec.getQuality(partition1, G);
-
-std::vector<node> secondVec;
-
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(1);
-secondVec.push_back(1);
-secondVec.push_back(1);
-secondVec.push_back(1);
-secondVec.push_back(1);
-secondVec.push_back(1);
-secondVec.push_back(0);
-
-Partition partition2(secondVec);
-
-double q2 = ec.getQuality(partition2, G);
-
-INFO("SECOND Partition: ", partition2.getVector());
-INFO("Quality of MinCut: ", q);
-INFO("Quality of partition: ", q2);
-
-EXPECT_TRUE(q <= q2);
-
-}
-TEST_F(CommunityGTest, testImproveClustering2){
+TEST_F(CommunityGTest, testMinCutStoerWagner){
 count n = 9;
 Graph G(n, true, false);
 
@@ -913,91 +864,135 @@ G.addEdge(8,7,1);
 G.addEdge(1, 4, 1);
 G.addEdge(3, 6, 1);
 
+    node s = G.addNode();
+    node t = G.addNode();
 
-//G.addEdge(9, 4, 6);
-//G.addEdge(9, 5, 6);
-//G.addEdge(9, 6, 6);
-//
-//G.addEdge(0, 10, 3);
-//G.addEdge(1, 10, 3);
-//G.addEdge(2, 10, 3);
-//G.addEdge(3, 10, 3);
-//G.addEdge(7, 10, 3);
-//G.addEdge(8, 10, 3);
+    G.addEdge(s, 4, 6);
+    G.addEdge(s, 5, 6);
+    G.addEdge(s, 6, 6);
 
-
-//MinCutStoerWagner mc(G);
-
-//mc.run();
-
-//Partition partition1 = mc.getPartition();
+    G.addEdge(0, t, 3);
+    G.addEdge(1, t, 3);
+    G.addEdge(2, t, 3);
+    G.addEdge(3, t, 3);
+    G.addEdge(7, t, 3);
+    G.addEdge(8, t, 3);
 
 
+MinCutStoerWagner mc(G);
 
-std::vector<node> secondVec;
+mc.run();
 
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(0);
-secondVec.push_back(1);
-secondVec.push_back(1);
-secondVec.push_back(1);
-secondVec.push_back(0);
-secondVec.push_back(0);
+Partition partition1 = mc.getPartition();
 
-Partition partition2(secondVec);
+//partition1.compact();
 
-ImproveClustering ic(G, partition2);
-
-ic.run();
-
-INFO("RESULT: ", ic.getPartition().getVector());
+INFO("COMPACT PARTITION MC", partition1.getVector());
 
 }
-TEST_F(CommunityGTest, tryImproveClustering0) {
-    count n = 6;
-    Graph G(n);
 
-    G.addEdge(0, 2);
-    G.addEdge(1, 2);
-    G.addEdge(2, 3);
-    G.addEdge(2, 4);
-    G.addEdge(3, 5);
-    G.addEdge(4, 5);
+TEST_F(CommunityGTest, testImproveClustering) {
+    METISGraphReader reader;
+    Graph unweightedG = reader.read("../input/polblogs.graph");
 
-    //	METISGraphReader reader;
-    //	Graph G = reader.read("input/PGPgiantcompo.graph");
+    Graph G(unweightedG, true, false);
+    G.forEdges([&](node u, node v){
+        G.setWeight(u, v, 1);
+    });
 
-    Partition initial(G.numberOfNodes(), 0);
-    initial.moveToSubset(1, 0);
+    std::vector<node> initVec;
+    initVec.resize(G.upperNodeIdBound());
+    INFO("Number of Nodes in G", G.numberOfNodes());
+    INFO("Upper Node ID Bound", G.upperNodeIdBound());
 
-    MinCutStoerWagner mc(G);
-    mc.run();
+    for (int i = 0; i < G.upperNodeIdBound()-1; ++i){
+        if (i < G.upperNodeIdBound()/2){
+            initVec[i] = 0;
+        } else {
+            initVec[i] = 1;
+        }
+    }
 
-    Partition p = mc.getPartition();
-    ImproveClustering ic(G, initial);
+    Partition partition(initVec);
+
+    INFO("CLUSTERING: ", partition.getVector());
+    Modularity modularity1;
+
+    double m = modularity1.getQuality(partition, G);
+
+    INFO("Size of random clustering: ", partition.subsetSizes().size());
+    INFO("Modularity of random clustering: ", m);
+
+    EXPECT_EQ(2, partition.getSubsetIds().size());
+
+
+   // MinCutStoerWagner mc(G);
+
+   // mc.run();
+
+   // Partition partition = mc.getPartition();
+
+   // INFO("MC Partition", partition.getVector());
+
+    //Modularity modularity1;
+    //double m = modularity1.getQuality(partition, G);
+
+    //INFO("Size of random clustering: ", partition.subsetSizes().size());
+    //INFO("Modularity of random clustering: ", m);
+/*
+    PLP plp(G);
+
+    plp.run();
+
+    Partition partition2 = plp.getPartition();
+
+    INFO("PLM Partition", partition2.getVector());
+*/
+
+
+    ImproveClustering ic(G, partition);
+
     ic.run();
+
     Partition result = ic.getPartition();
 
-    EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
+    INFO("Size of result: ", result.subsetSizes().size());
+
+    Modularity modularity2;
+    double mr = modularity2.getQuality(result, G);
+
+    INFO("Modularity after improve: ", mr);
+
     EXPECT_EQ(2, result.getSubsetIds().size());
+
 }
 
+TEST_F(CommunityGTest, properClustering){
+    node n = 4;
+    Graph G(n, true, false);
 
-TEST_F(CommunityGTest, tryImproveClustering) {
-	METISGraphReader reader;
-	Graph G = reader.read("input/PGPgiantcompo.graph");
+    G.addEdge(0, 1, 1);
+    G.addEdge(1,2,1);
+    G.addEdge(2,3,1);
 
-	Partition initial(G.numberOfNodes(), 0);
-	initial.moveToSubset(1, 0);
 
-	ImproveClustering ic(G, initial);
-    ic.run();
-    Partition result = ic.getPartition();
+    std::vector<node> v;
+    v.push_back(0);
+    v.push_back(0);
+    v.push_back(1);
+    v.push_back(1);
+    v.push_back(1);
 
-    EXPECT_TRUE(GraphClusteringTools::isProperClustering(G, result));
-    EXPECT_EQ(2, result.getSubsetIds().size());
+    Partition p(v);
+
+    EdgeCut ec;
+
+    INFO("IS PROPER: ", GraphClusteringTools::isProperClustering(G, p));
+    INFO("CUT VALUE: ", ec.getQuality(p, G));
+
+
+
+
 }
 
 } /* namespace NetworKit */

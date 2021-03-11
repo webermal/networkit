@@ -66,7 +66,7 @@ namespace NetworKit {
 
             alpha = alpha_0;
 
-            MinCutStoerWagner minCut(flowGraph, s, t);
+            MinCutStoerWagner minCut(flowGraph);
             minCut.run();
             Partition minCutPartition = minCut.getPartition();
 
@@ -90,11 +90,7 @@ namespace NetworKit {
 
         double dAOfS = 0.0;
         for (const node n: S){
-            if (A.find(n) != A.end()){
-                dAOfS += 1.0;
-            } else if (G->hasNode(n)){
-                dAOfS -= f_a;
-            }
+            dAOfS += A.find(n) != A.end() ? 1.0 : -f_a;
         }
 
         INFO("d hat den Wert: ", dAOfS);
