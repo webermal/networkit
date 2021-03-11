@@ -39,15 +39,10 @@ void MinCutStoerWagner::run() {
 	EdgeCut ec;
 
 	while (current_graph.numberOfNodes() > 1) {
-		Partition current_solution = phase(s_t_cut ? s : 0);
+		Partition current_solution = phase(s);
 		double current_cut = ec.getQuality(current_solution, *G);
-		if (s_t_cut && current_solution[s] != current_solution[t]) {
-			result = current_solution;
-			hasRun = true;
-			return;
-		}
 
-		if (current_cut < best_cut) {
+		if (current_cut < best_cut && (!s_t_cut || current_solution[s] != current_solution[t])) {
 			best_solution = current_solution;
 			best_cut = current_cut;
 		}

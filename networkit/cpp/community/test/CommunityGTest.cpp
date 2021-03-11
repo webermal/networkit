@@ -767,7 +767,6 @@ TEST_F(CommunityGTest, testMinCutStoerWagner2){
 	G.addEdge(7, 10, 2);
 	G.addEdge(8, 10, 2);
 
-
 	MinCutStoerWagner mc(G);
 
 	mc.run();
@@ -844,7 +843,6 @@ TEST_F(CommunityGTest, testMinCutStoerWagner3){
 	G.addEdge(3, 10, 3);
 	G.addEdge(7, 10, 3);
 	G.addEdge(8, 10, 3);
-
 
 	MinCutStoerWagner mc(G);
 
@@ -923,7 +921,6 @@ TEST_F(CommunityGTest, testMinCutStoerWagner4){
 	G.addEdge(3, 10, 3);
 	G.addEdge(7, 10, 3);
 	G.addEdge(8, 10, 3);
-
 
 	MinCutStoerWagner mc(G, 0, 10);
 
