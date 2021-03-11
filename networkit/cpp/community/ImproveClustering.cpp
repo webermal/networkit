@@ -66,7 +66,7 @@ namespace NetworKit {
 
             alpha = alpha_0;
 
-            MinCutStoerWagner minCut(flowGraph);
+            MinCutStoerWagner minCut(flowGraph, s, t);
             minCut.run();
             Partition minCutPartition = minCut.getPartition();
 
