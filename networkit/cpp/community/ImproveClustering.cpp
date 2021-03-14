@@ -8,11 +8,12 @@
 #include <iostream>
 #include <networkit/community/GraphClusteringTools.hpp>
 #include <networkit/community/EdgeCut.hpp>
+#include <networkit/flow/EdmondsKarp.hpp>
 
 namespace NetworKit {
 
-    ImproveClustering::ImproveClustering(const Graph &G, const Partition initPartition):
-      CommunityDetectionAlgorithm(G, initPartition), flowGraph(G) {
+    ImproveClustering::ImproveClustering(const Graph &G, const Partition initPartition, const count maxIter):
+      CommunityDetectionAlgorithm(G, initPartition), flowGraph(G, true, true), isDirected(G.isDirected()), maxIter(maxIter) {
 
         // add source (s) and sink (t) to the flowGraph
         s = flowGraph.addNode();
@@ -45,6 +46,9 @@ namespace NetworKit {
                 flowGraph.addEdge(n, t, 1);
             }
         });
+
+        // index Edges for Edmonds Karp algorithm
+        flowGraph.indexEdges();
     }
 
     void ImproveClustering::run() {
@@ -54,32 +58,49 @@ namespace NetworKit {
 
         INFO("Init Partition", result.getVector());
         EdgeCut ec;
-        double boundaryA = ec.getQuality(result, *G);
+        double boundaryA = ec.getQuality(result, *G) + A.size();
         double alpha_0 = boundaryA/std::min(A.size(), (G->numberOfNodes() - A.size()));
+
         double alpha;
-        int i = 0;
+        iter = 0;
+
         do {
-            i += 1;
-            std::cout << i << "\n";
+            // counter for
+            iter += 1;
+            // std::cout << i << "\n";
 
             updateEdgeWeights(alpha_0);
 
             alpha = alpha_0;
 
+            EdmondsKarp edmondsKarp(flowGraph, s, t);
+            edmondsKarp.run();
+
+            Partition minCutPartition(flowGraph.numberOfNodes(), 0);
+
+            S0 = edmondsKarp.getSourceSet();
+
+            for (const node n: S0){
+                minCutPartition[n] = 1;
+            }
+
+
+            /*
             MinCutStoerWagner minCut(flowGraph, s, t);
             minCut.run();
             Partition minCutPartition = minCut.getPartition();
+*/
+            EdgeCut ec;
 
-
-            INFO("MIN CUT IN IMPROVE RUN: ", minCutPartition.getVector());
-
+            INFO("boundary S: ", ec.getQuality(minCutPartition, flowGraph));
+            INFO("CUT VALUE From edmonds Karp: ", edmondsKarp.getMaxFlow());
 
 
             alpha_0 = relativeQuotientScore(minCutPartition);
 
             INFO("ALPHA 0: ", alpha_0);
 
-        } while (i < 10);
+        } while (alpha_0 > alpha and iter < 4);
 
         hasRun = true;
     }
@@ -96,8 +117,12 @@ namespace NetworKit {
         INFO("d hat den Wert: ", dAOfS);
 
         // Compute the Cut-Value of S / complement(S)
-        EdgeCut ec;
-        double boundaryS = ec.getQuality(p, flowGraph);
+        //EdgeCut ec;
+        //double boundaryS = ec.getQuality(p, flowGraph);
+
+        EdmondsKarp edmondsKarp(flowGraph, s, t);
+        edmondsKarp.run();
+        double boundaryS = 2*edmondsKarp.getMaxFlow();
 
         INFO("DELTA S: ", boundaryS);
         INFO("D: ", dAOfS);
@@ -111,12 +136,12 @@ namespace NetworKit {
     void ImproveClustering::updateEdgeWeights(double alpha){
         flowGraph.forNeighborsOf(s, [&](node n){
             flowGraph.setWeight(s, n, alpha);
-            INFO("ALPHA: ", alpha);
+            //INFO("ALPHA: ", alpha);
         });
 
-        flowGraph.forNeighborsOf(t, [&](node n){
+        flowGraph.forInNeighborsOf(t, [&](node n){
             flowGraph.setWeight(n, t, alpha*f_a);
-            INFO("ALPHA*FA: ", alpha*f_a);
+            //INFO("ALPHA*FA: ", alpha*f_a);
         });
     }
 }

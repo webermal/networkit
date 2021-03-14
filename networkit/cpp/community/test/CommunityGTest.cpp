@@ -952,6 +952,7 @@ TEST_F(CommunityGTest, testImproveClustering) {
 
     ImproveClustering ic(G, partition);
 
+
     ic.run();
 
     Partition result = ic.getPartition();
