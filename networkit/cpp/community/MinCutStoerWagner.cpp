@@ -11,16 +11,18 @@
 
 #include <networkit/community/MinCutStoerWagner.hpp>
 #include <networkit/community/EdgeCut.hpp>
-#include <networkit/graph/GraphTools.hpp>
 
-constexpr double inf = std::numeric_limits<double>::max();
+constexpr double inf = std::numeric_limits<int64_t>::max();
 
 namespace NetworKit {
 
 MinCutStoerWagner::MinCutStoerWagner(const Graph &G) :
-		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound(), -GraphTools::maxWeightedDegree(G), 0) {
+		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound(), -G.totalEdgeWeight(), 0) {
 	G.forNodes([&](node u) {
 		node_mapping.push_back(u);
+	});
+	G.forEdges([&](node u, node v, edgeweight weight) {
+		assert((int) weight == weight);
 	});
 }
 
@@ -38,7 +40,7 @@ void MinCutStoerWagner::run() {
 			best_cut = current_cut;
 		}
 
-//		std::cout << "PHASE " << current_cut << "; cs[s]=" << current_solution[s] << "; cs[t]=" << current_solution[t] <<  "\n";
+//		std::cout << "PHASE " << current_cut << "\n";
 //		std::cout << "PART ";
 //		G->forNodes([&](node u){
 //			std::cout << current_solution[u];
@@ -63,14 +65,14 @@ void MinCutStoerWagner::fillQueue(node a) {
 		}
 
 		edgeweight weight = current_graph.weight(a, u);
-		pq.insert(-weight, u);
+		pq.insert((int64_t) (-weight), u);
 	});
 }
 
 void MinCutStoerWagner::updateKeys(node u, Partition &A) {
 	current_graph.forNeighborsOf(u, [&](node v, edgeweight weight) {
 		if (A[v] == 0) {
-			pq.changeKey(pq.getKey(v) - weight, v);
+			pq.changeKey((int64_t) (pq.getKey(v) - weight), v);
 		}
 	});
 }
