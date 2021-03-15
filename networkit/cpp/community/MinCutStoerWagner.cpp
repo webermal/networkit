@@ -18,16 +18,7 @@ constexpr double inf = std::numeric_limits<double>::max();
 namespace NetworKit {
 
 MinCutStoerWagner::MinCutStoerWagner(const Graph &G) :
-		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound()),
-				keys(G.upperNodeIdBound()), s(0), t(0), s_t_cut(false) {
-	G.forNodes([&](node u) {
-		node_mapping.push_back(u);
-	});
-}
-
-MinCutStoerWagner::MinCutStoerWagner(const Graph &G, node s, node t) :
-		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound()),
-						keys(G.upperNodeIdBound()), s(s), t(t), s_t_cut(true) {
+		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound(), -GraphTools::maxWeightedDegree(G), 0) {
 	G.forNodes([&](node u) {
 		node_mapping.push_back(u);
 	});
@@ -39,14 +30,27 @@ void MinCutStoerWagner::run() {
 	EdgeCut ec;
 
 	while (current_graph.numberOfNodes() > 1) {
-		Partition current_solution = phase(s);
+		Partition current_solution = phase(0);
 		double current_cut = ec.getQuality(current_solution, *G);
 
-		if (current_cut < best_cut && (!s_t_cut || current_solution[s] != current_solution[t])) {
+		if (current_cut < best_cut) {
 			best_solution = current_solution;
 			best_cut = current_cut;
 		}
+
+//		std::cout << "PHASE " << current_cut << "; cs[s]=" << current_solution[s] << "; cs[t]=" << current_solution[t] <<  "\n";
+//		std::cout << "PART ";
+//		G->forNodes([&](node u){
+//			std::cout << current_solution[u];
+//		});
+//		std::cout << "\n";
 	}
+
+//	std::cout << "PART ";
+//	G->forNodes([&](node u){
+//		std::cout << best_solution[u];
+//	});
+//	std::cout << "\n";
 
 	result = best_solution;
 	hasRun = true;
@@ -60,15 +64,13 @@ void MinCutStoerWagner::fillQueue(node a) {
 
 		edgeweight weight = current_graph.weight(a, u);
 		pq.insert(-weight, u);
-		keys[u] = -weight;
 	});
 }
 
 void MinCutStoerWagner::updateKeys(node u, Partition &A) {
 	current_graph.forNeighborsOf(u, [&](node v, edgeweight weight) {
 		if (A[v] == 0) {
-			pq.changeKey(keys[v] - weight, v);
-			keys[v] -= weight;
+			pq.changeKey(pq.getKey(v) - weight, v);
 		}
 	});
 }
@@ -78,10 +80,11 @@ Partition MinCutStoerWagner::phase(node a) {
 	Partition result(G->numberOfNodes(), 0);
 
 	if (current_graph.numberOfNodes() == 2) {
-		current_graph.forNodes([&](node u) {
-			result.moveToSubset((node_mapping[u] == a) ? 1 : 0, u);
-		});
+//		current_graph.forNodes([&](node u){
+//			std::cout << u << "\n";
+//		});
 
+		result.moveToSubset(1, a);
 		current_graph.removeNode(a);
 
 		return result;
@@ -91,16 +94,30 @@ Partition MinCutStoerWagner::phase(node a) {
 	fillQueue(a);
 	A[a] = 1;
 
+//	std::cout << "INITIAL ";
+//	current_graph.forNodes([&](node u){
+//		if (current_graph.hasNode(u)) std::cout << u << ":" << -pq.getKey(u) << " ";
+//	});
+//	std::cout << "\n";
+
 	while (pq.size() > 2) {
 		node u = pq.extractMin().second;
 		A[u] = 1;
+//		std::cout << "move " << u << "\n";
 		updateKeys(u, A);
+
+//		current_graph.forNodes([&](node u){
+//			if (current_graph.hasNode(u)) std::cout << u << ":" << -pq.getKey(u) << " ";
+//		});
+//		std::cout << "\n";
 	}
 
 	node s = pq.extractMin().second;
 	A[s] = 1;
 	updateKeys(s, A);
 	node t = pq.extractMin().second;
+
+//	std::cout << "s=" << s << ";t=" << t << "\n";
 
 	// transform A to fit on the whole graph G
 	G->forNodes([&](node u) {

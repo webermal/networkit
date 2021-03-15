@@ -11,7 +11,7 @@
 #include <networkit/base/Algorithm.hpp>
 #include <networkit/graph/Graph.hpp>
 #include <networkit/structures/Partition.hpp>
-#include <networkit/auxiliary/PrioQueue.hpp>
+#include <networkit/auxiliary/BucketPQ.hpp>
 
 namespace NetworKit {
 
@@ -24,13 +24,6 @@ public:
      * @param[in] G input graph
      */
     MinCutStoerWagner(const Graph& G);
-
-    /**
-	 * @param[in] G input graph
-	 * @param[in] s vertex s for s-t min-cut
-	 * @param[in] t vertex t for s-t min-cut
-	 */
-	MinCutStoerWagner(const Graph& G, node s, node t);
 
     /**
      * Get string representation.
@@ -53,13 +46,10 @@ public:
 private:
     
     const Graph* G;
-    node s, t;
-    bool s_t_cut;
 
     Graph current_graph;
     std::vector<node> node_mapping;
-    Aux::PrioQueue<double, node> pq;
-    std::vector<double> keys;
+    Aux::BucketPQ pq;
     Partition result;
 
     void fillQueue(node a);
