@@ -52,6 +52,8 @@ private:
     Aux::BucketPQ pq;
     Partition result;
 
+    int phaseTime = 0, updateTime = 0, initTime = 0, transformTime = 0;
+
     void fillQueue(node a);
     void updateKeys(node u, Partition& A);
 

@@ -12,50 +12,53 @@
 #include <networkit/community/MinCutStoerWagner.hpp>
 #include <networkit/community/EdgeCut.hpp>
 
+#include <networkit/auxiliary/Timer.hpp>
+
 constexpr double inf = std::numeric_limits<int64_t>::max();
 
 namespace NetworKit {
 
 MinCutStoerWagner::MinCutStoerWagner(const Graph &G) :
-		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound(), -G.totalEdgeWeight(), 0) {
+		G(&G), current_graph(G, true, false), pq(G.upperNodeIdBound(),
+				-G.totalEdgeWeight(), 0) {
 	G.forNodes([&](node u) {
 		node_mapping.push_back(u);
 	});
 	G.forEdges([&](node u, node v, edgeweight weight) {
-		assert((int) weight == weight);
+		assert((int ) weight == weight);
 	});
 }
 
 void MinCutStoerWagner::run() {
+	Aux::Timer timer, phaseTimer;
+	timer.start();
 	Partition best_solution;
 	double best_cut = inf;
 	EdgeCut ec;
 
 	while (current_graph.numberOfNodes() > 1) {
+		phaseTimer.start();
 		Partition current_solution = phase(0);
+		phaseTimer.stop();
+		phaseTime += phaseTimer.elapsedMicroseconds();
 		double current_cut = ec.getQuality(current_solution, *G);
 
 		if (current_cut < best_cut) {
 			best_solution = current_solution;
 			best_cut = current_cut;
 		}
-
-//		std::cout << "PHASE " << current_cut << "\n";
-//		std::cout << "PART ";
-//		G->forNodes([&](node u){
-//			std::cout << current_solution[u];
-//		});
-//		std::cout << "\n";
 	}
-
-//	std::cout << "PART ";
-//	G->forNodes([&](node u){
-//		std::cout << best_solution[u];
-//	});
-//	std::cout << "\n";
 
 	result = best_solution;
 	hasRun = true;
+	timer.stop();
+	double algTime = timer.elapsedMicroseconds();
+
+//	std::cout << "Alg. running time: " << algTime / 1000000.0 << " s\n"
+//				<< "Phase time: " << phaseTime / 1000000.0 << " s; " << phaseTime / algTime * 100 << " %\n"
+//				<< "Initialisation time: " << initTime / 1000000.0 << " s; " << initTime / algTime * 100 << " %\n"
+//				<< "Update time: " << updateTime / 1000000.0 << " s; " << updateTime / algTime * 100 << " %\n"
+//				<< "Transformation time: " << transformTime / 1000000.0 << " s; " << transformTime / algTime * 100 << " %\n";
 }
 
 void MinCutStoerWagner::fillQueue(node a) {
@@ -78,48 +81,37 @@ void MinCutStoerWagner::updateKeys(node u, Partition &A) {
 }
 
 Partition MinCutStoerWagner::phase(node a) {
+	Aux::Timer timer;
+	timer.start();
 	Partition A(G->numberOfNodes(), 0);
 	Partition result(G->numberOfNodes(), 0);
 
 	if (current_graph.numberOfNodes() == 2) {
-//		current_graph.forNodes([&](node u){
-//			std::cout << u << "\n";
-//		});
-
 		result.moveToSubset(1, a);
 		current_graph.removeNode(a);
-
 		return result;
 	}
 
 	pq.clear();
 	fillQueue(a);
 	A[a] = 1;
+	timer.stop();
+	initTime += timer.elapsedMicroseconds();
 
-//	std::cout << "INITIAL ";
-//	current_graph.forNodes([&](node u){
-//		if (current_graph.hasNode(u)) std::cout << u << ":" << -pq.getKey(u) << " ";
-//	});
-//	std::cout << "\n";
-
+	timer.start();
 	while (pq.size() > 2) {
 		node u = pq.extractMin().second;
 		A[u] = 1;
-//		std::cout << "move " << u << "\n";
 		updateKeys(u, A);
-
-//		current_graph.forNodes([&](node u){
-//			if (current_graph.hasNode(u)) std::cout << u << ":" << -pq.getKey(u) << " ";
-//		});
-//		std::cout << "\n";
 	}
+	timer.stop();
+	updateTime += timer.elapsedMicroseconds();
 
+	timer.start();
 	node s = pq.extractMin().second;
 	A[s] = 1;
 	updateKeys(s, A);
 	node t = pq.extractMin().second;
-
-//	std::cout << "s=" << s << ";t=" << t << "\n";
 
 	// transform A to fit on the whole graph G
 	G->forNodes([&](node u) {
@@ -127,12 +119,13 @@ Partition MinCutStoerWagner::phase(node a) {
 	});
 
 	// update node mapping
-	G->forNodes([&](node u){
+	G->forNodes([&](node u) {
 		if (node_mapping[u] == s) {
 			node_mapping[u] = t;
 		}
 	});
 
+	timer.start();
 	// shrink G by merging s and t
 	current_graph.forNeighborsOf(s, [&](node u, edgeweight weight) {
 		if (u != t) {
@@ -141,6 +134,8 @@ Partition MinCutStoerWagner::phase(node a) {
 	});
 
 	current_graph.removeNode(s);
+	timer.stop();
+	transformTime += timer.elapsedMicroseconds();
 
 	return result;
 }
