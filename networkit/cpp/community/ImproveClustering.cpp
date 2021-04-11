@@ -53,10 +53,6 @@ namespace NetworKit {
 
     void ImproveClustering::run() {
 
-        INFO("FLOW GRAPH deg s", flowGraph.degree(s));
-        INFO("FLOW GRAPH deg t", flowGraph.degree(t));
-
-        INFO("Init Partition", result.getVector());
         EdgeCut ec;
         double boundaryA = ec.getQuality(result, *G) + A.size();
         double alpha_0 = boundaryA/std::min(A.size(), (G->numberOfNodes() - A.size()));
@@ -85,11 +81,6 @@ namespace NetworKit {
             }
 
 
-            /*
-            MinCutStoerWagner minCut(flowGraph, s, t);
-            minCut.run();
-            Partition minCutPartition = minCut.getPartition();
-*/
             EdgeCut ec;
 
             INFO("boundary S: ", ec.getQuality(minCutPartition, flowGraph));
@@ -100,7 +91,19 @@ namespace NetworKit {
 
             INFO("ALPHA 0: ", alpha_0);
 
-        } while (alpha_0 > alpha and iter < 4);
+        } while (iter < maxIter);
+
+        //result = Partition(G->upperNodeIdBound(), 0);
+        result.compact();
+        G->forNodes([&](const node n){
+           result.moveToSubset(0, n);
+        });
+
+        for (const node n: S0){
+            if (G->hasNode(n)){
+                result.moveToSubset(1, n);
+            }
+        }
 
         hasRun = true;
     }
@@ -114,18 +117,11 @@ namespace NetworKit {
             dAOfS += A.find(n) != A.end() ? 1.0 : -f_a;
         }
 
-        INFO("d hat den Wert: ", dAOfS);
-
-        // Compute the Cut-Value of S / complement(S)
-        //EdgeCut ec;
-        //double boundaryS = ec.getQuality(p, flowGraph);
 
         EdmondsKarp edmondsKarp(flowGraph, s, t);
         edmondsKarp.run();
-        double boundaryS = 2*edmondsKarp.getMaxFlow();
+        double boundaryS = isDirected ? edmondsKarp.getMaxFlow() : 2*edmondsKarp.getMaxFlow();
 
-        INFO("DELTA S: ", boundaryS);
-        INFO("D: ", dAOfS);
         double q = dAOfS > 0.0 ? boundaryS/dAOfS : std::numeric_limits<double>::max();
 
         return q;
@@ -136,12 +132,10 @@ namespace NetworKit {
     void ImproveClustering::updateEdgeWeights(double alpha){
         flowGraph.forNeighborsOf(s, [&](node n){
             flowGraph.setWeight(s, n, alpha);
-            //INFO("ALPHA: ", alpha);
         });
 
         flowGraph.forInNeighborsOf(t, [&](node n){
             flowGraph.setWeight(n, t, alpha*f_a);
-            //INFO("ALPHA*FA: ", alpha*f_a);
         });
     }
 }

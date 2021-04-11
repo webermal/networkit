@@ -1104,7 +1104,7 @@ cdef class MinCutStoerWagner(Algorithm):
 cdef extern from "<networkit/community/ImproveClustering.hpp>":
 
 	cdef cppclass _ImproveClustering "NetworKit::ImproveClustering"(_CommunityDetectionAlgorithm):
-		_ImproveClustering(_Graph _G, _Partition _initial_partition) except +
+		_ImproveClustering(_Graph _G, _Partition _initial_partition, count maxIter) except +
 
 
 cdef class ImproveClustering(CommunityDetector):
@@ -1118,9 +1118,9 @@ cdef class ImproveClustering(CommunityDetector):
 			The partition to be improved.
 	"""
 
-	def __cinit__(self, Graph G not None, Partition initial_partition):
+	def __cinit__(self, Graph G not None, Partition initial_partition, count maxIter):
 		self._G = G
-		self._this = new _ImproveClustering(G._this, initial_partition._this)
+		self._this = new _ImproveClustering(G._this, initial_partition._this, maxIter)
 		
 
 def detectCommunities(G, algo=None, inspect=True):

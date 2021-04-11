@@ -813,7 +813,7 @@ TEST_F(CommunityGTest, testImproveClustering0){
     INFO("SZE OF PARTITION 1: ", partition.subsetSizeMap()[1]);
     INFO("SIZE OF PARTITION 2.: ", partition.subsetSizeMap()[2]);
 
-    ImproveClustering ic(G, partition);
+    ImproveClustering ic(G, partition, 5);
 
     ic.run();
 
@@ -950,7 +950,7 @@ TEST_F(CommunityGTest, testImproveClustering) {
 */
 
 
-    ImproveClustering ic(G, partition);
+    ImproveClustering ic(G, partition, 15);
 
 
     ic.run();
@@ -960,39 +960,11 @@ TEST_F(CommunityGTest, testImproveClustering) {
     INFO("Size of result: ", result.subsetSizes().size());
 
     Modularity modularity2;
-    double mr = modularity2.getQuality(result, G);
+    double m2 = modularity2.getQuality(result, G);
 
-    INFO("Modularity after improve: ", mr);
+    INFO("Modularity after improve: ", m2);
 
     EXPECT_EQ(2, result.getSubsetIds().size());
-
-}
-
-TEST_F(CommunityGTest, properClustering){
-    node n = 4;
-    Graph G(n, true, false);
-
-    G.addEdge(0, 1, 1);
-    G.addEdge(1,2,1);
-    G.addEdge(2,3,1);
-
-
-    std::vector<node> v;
-    v.push_back(0);
-    v.push_back(0);
-    v.push_back(1);
-    v.push_back(1);
-    v.push_back(1);
-
-    Partition p(v);
-
-    EdgeCut ec;
-
-    INFO("IS PROPER: ", GraphClusteringTools::isProperClustering(G, p));
-    INFO("CUT VALUE: ", ec.getQuality(p, G));
-
-
-
 
 }
 
